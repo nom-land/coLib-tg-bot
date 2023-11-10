@@ -1,0 +1,25 @@
+{
+  "name": "nunti-tg",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --esm src/index.ts",
+    "build": "npx tsc",
+    "prod": "node dist/src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bunyan": "^1.8.11",
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "bunyan": "^1.8.15",
+    "dotenv": "^16.3.1",
+    "grammy": "^1.19.2"
+  }
+}
