@@ -34,15 +34,27 @@ async function main() {
             } else {
                 const fromMsg = ctx.msg;
                 const helpMsg = await helpInfoInGroup(bot, fromMsg);
-                ctx.reply(helpMsg);
+                ctx.reply(helpMsg, {
+                    reply_to_message_id: fromMsg.message_id,
+                });
 
                 const botId = bot.botInfo.id;
                 const botHasAdmin = await isAdmin(bot, fromMsg.chat.id, botId);
                 if (!botHasAdmin) {
-                    return "But first of all I need to be prompted as an admin so that I can start to work!";
+                    ctx.reply(
+                        "But first of all I need to be prompted as an admin so that I can start to work!",
+                        {
+                            reply_to_message_id: fromMsg.message_id,
+                        }
+                    );
                 }
                 if (ctx.msg.chat.type === "private") {
-                    return "Sorry but private chat hasn't been supported yet.";
+                    ctx.reply(
+                        "Sorry but private chat hasn't been supported yet.",
+                        {
+                            reply_to_message_id: fromMsg.message_id,
+                        }
+                    );
                 }
             }
         });
