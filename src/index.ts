@@ -6,7 +6,6 @@ import {
     handleEvent,
     helpInfoInGroup,
     isAdmin,
-    makeMsgLink,
     mentions,
 } from "./utils/telegram";
 import { Bot } from "grammy";
@@ -62,7 +61,7 @@ async function main() {
         // Curation will be processed in the following cases:
         // 1. @Bot && URL: when a message contains both @Bot and URL, the URL will be processed as curation, no matter if the message is a reply.
         // 2. @Bot && !URL: when a message contains @Bot but no URL, the message will be processed as curation if the original message contains URL and !@Bot:
-        //    a. The author of the two messages are the same: the original message will be processed as curation.
+        //    a. The author of the two messages are the same: the original message will be processed as curation. // TODO
         //    b. The author of the two messages are different: the URL and the content of the reply message will be processed as curation, and the curator will be the author of the reply message.
         // 3. @Bot && not covered by 1 and 2: /help
         bot.on("message:entities:mention", async (ctx) => {
@@ -98,30 +97,15 @@ async function main() {
                     if (replyToMsg && replyToMsg.text && replyToMsg.from) {
                         const replyToMsgUrl = getFirstUrl(replyToMsg.text);
                         if (replyToMsgUrl) {
-                            if (replyToMsg.from.id === msg.from.id) {
-                                // Scenario 2.a
-                                handleEvent(ctx, msg, processCuration, [
-                                    nomland,
-                                    replyToMsgUrl,
-                                    replyToMsg,
-                                    community,
-                                    botUsername,
-                                    "elephant",
-                                ]);
-                            } else {
-                                // Scenario 2.b
-                                handleEvent(ctx, msg, processCuration, [
-                                    nomland,
-                                    replyToMsgUrl,
-                                    msg,
-                                    community,
-                                    botUsername,
-                                    "elephant",
-                                ]);
-                            }
-                            await ctx.reply(
-                                "TODO: Processing curation @Bot && !URL && same author..."
-                            );
+                            handleEvent(ctx, msg, processCuration, [
+                                nomland,
+                                replyToMsgUrl,
+                                msg,
+                                community,
+                                botUsername,
+                                "elephant",
+                            ]);
+
                             notRecognized = false;
                         }
                     }
