@@ -13,6 +13,7 @@ import { helpMsg } from "./utils/constants";
 import { getFirstUrl } from "./utils/common";
 import { processCuration } from "./utils/nomland";
 import { makeAccount } from "nomland.js";
+import { settings } from "./config";
 
 async function main() {
     try {
@@ -22,7 +23,7 @@ async function main() {
         await bot.init();
         const botUsername = bot.botInfo.username;
 
-        const nomland = new Nomland("nunti", appKey);
+        const nomland = new Nomland(settings.appName, appKey);
         console.log(nomland.getConfig().botConfig);
 
         bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));

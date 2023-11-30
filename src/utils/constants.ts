@@ -1,11 +1,11 @@
 export function helpMsg(botUsername: string, mode: "dm" | "group" | "admin") {
     const adminCommands = `
-  /addlist <list name> <list description>: add a new list
-  /dellist <list name>: delete a list
-  /list: list all the lists
-  /list <list name>: list all the items in a list
-  /add <list name> <item>: add an item to a list
-  /del <list name> <item>: delete an item from a list
+  /addlist <list name> <list description>: add a new list (comming soon)
+  /dellist <list name>: delete a list (comming soon)
+  /list: list all the lists (comming soon)
+  /list <list name>: list all the items in a list (comming soon)
+  /add <list name> <item>: add an item to a list (comming soon)
+  /del <list name> <item>: delete an item from a list (comming soon)
   /help: show this message`;
 
     if (mode === "dm")
