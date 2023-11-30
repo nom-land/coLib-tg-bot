@@ -1,4 +1,5 @@
 export function helpMsg(botUsername: string, mode: "dm" | "group" | "admin") {
+    //TODO: /admin command shows the admin commands
     const adminCommands = `
   /addlist <list name> <list description>: add a new list (coming soon)
   /dellist <list name>: delete a list (coming soon)
@@ -25,7 +26,7 @@ ${adminCommands}
   Message B(replying to A): @${botUsername} #Romantic #AmazingBook
   `;
     // 4. Replying to any existed curation message will also be recorded with the curation together. (Welcome! Discussion is encouraged!)
-    else if (mode === "group")
+    else
         return `Hi! I'm nunti.
       
     1. If you want to share something, just in the group paste the URL then @ me. e.g.
@@ -36,32 +37,7 @@ ${adminCommands}
     
     Message A: This book is amazing!!! https://example.com/u/xyz 
     Message B(replying to A): @${botUsername} #Romantic #AmazingBook
+
+🕘 Coming Soon: Replying to the curation message will be recorded; Managing the curation list will be possible.
     `;
-    // 3. Replying to any existed curation message will also be recorded with the curation together. (Welcome! Discussion is encouraged!)
-    //     else if (mode === "admin")
-    //         return `
-    //     Hi! I'm nunti. I can help your community have better sharing experience and help your community easily build your brand.
-    //     1. To manage your community sharing lists, you can use the following commands(admin permission required):
-    // ${adminCommands}
-    //     2. If you want to share something, just in the group paste the URL then @ me(no permission required). e.g.
-    //     This book is amazing!!! https://example.com/u/xyz @${botUsername} #Romantic #AmazingBookList
-    //     3. You can also reply to a message containing URL to make a curation(no permission required). e.g.
-    //     Message A: This book is amazing!!! https://example.com/u/xyz
-    //     Message B(replying to A): @${botUsername} #Romantic #AmazingBookList
-    //     4. Replying to any existed curation message will also be recorded with the curation together. (Welcome! Discussion is encouraged!)
-    //   `;
-    else if (mode === "admin")
-        return `
-    Hi! I'm nunti. I can help your community have better sharing experience and help your community easily build your brand.
-      
-    1. If you want to share something, just in the group paste the URL then @ me. e.g.
-    
-    This book is amazing!!! https://example.com/u/xyz @${botUsername} #Romantic #AmazingBook
-    
-    2. You can also reply to a message containing URL to make a curation. e.g.
-    
-    Message A: This book is amazing!!! https://example.com/u/xyz 
-    Message B(replying to A): @${botUsername} #Romantic #AmazingBook
-  `;
-    return "";
 }
