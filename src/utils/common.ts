@@ -43,7 +43,7 @@ export function makeRawCuration(msgs: Message | Message[]) {
     }
     for (const msg of msgs) {
         //TODO: icon_custom_emoji_id and icon_color
-        let communityName = "Telegram";
+        let communityName = "Telegram Community";
         if ("title" in msg.chat) {
             communityName = msg.chat.title;
         }
@@ -53,7 +53,7 @@ export function makeRawCuration(msgs: Message | Message[]) {
         const msgLink = makeMsgLink(msg);
         const raw = {
             content: msg.text,
-            sources: [communityName, topicName],
+            sources: ["Telegram", communityName, topicName],
             date_published: convertDate(msg.date),
         } as RawCuration;
         if (msgLink) {

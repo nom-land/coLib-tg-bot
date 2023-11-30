@@ -22,7 +22,7 @@ async function main() {
         await bot.init();
         const botUsername = bot.botInfo.username;
 
-        const nomland = new Nomland("nunti-tg", appKey);
+        const nomland = new Nomland("nunti", appKey);
         console.log(nomland.getConfig().botConfig);
 
         bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
