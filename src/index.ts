@@ -114,7 +114,9 @@ async function main() {
 
                 if (notRecognized) {
                     const helpMsg = await helpInfoInGroup(bot, ctx.msg);
-                    ctx.reply(helpMsg);
+                    ctx.reply(helpMsg, {
+                        reply_to_message_id: msg.message_id,
+                    });
                 }
             }
         });
