@@ -72,11 +72,17 @@ export function getMsgText(msg: Message) {
     return msg.text || msg.caption;
 }
 
+export function getMessageId(msg: Message) {
+    const msgId =
+        msg.chat.id.toString().slice(4) + "-" + msg.message_id.toString();
+    return msgId;
+}
+
 export function getEntities(msg: Message) {
     return msg.entities || msg.caption_entities;
 }
 
-export async function getMsgAttachments(
+async function getMsgAttachments(
     ctx: CommandContext<Context>,
     msg: Message,
     botToken: string
@@ -103,4 +109,19 @@ export async function getMsgAttachments(
     } catch (error) {
         console.error("Fail to fetch photo: ", error);
     }
+}
+
+export async function getNoteAttachments(
+    ctx: CommandContext<Context>,
+    msg: Message,
+    botToken: string
+) {
+    const attachments = [] as NoteMetadataAttachmentBase<"address">[];
+    if (msg.photo) {
+        const pic = await getMsgAttachments(ctx, msg, botToken);
+        if (pic) {
+            attachments.push(pic);
+        }
+    }
+    return attachments;
 }

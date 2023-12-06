@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0
   nomland.js:
-    specifier: 0.1.11
-    version: 0.1.11(typescript@5.2.2)
+    specifier: 0.2.0
+    version: 0.2.0(typescript@5.2.2)
   tsup:
     specifier: ^7.2.0
     version: 7.2.0(ts-node@10.9.1)(typescript@5.2.2)
@@ -1620,8 +1620,8 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /nomland.js@0.1.11(typescript@5.2.2):
-    resolution: {integrity: sha512-Y53MDQFgsEHNa/HLXycV/yqrxLxOH+i/OPr/dfOT/TRABYBnL9/LSjb7fKzSGHqsKsMwWUoFjbZkcD4Ptk2AwA==}
+  /nomland.js@0.2.0(typescript@5.2.2):
+    resolution: {integrity: sha512-juOHbO8Cs/xwAX4lEJnVoum0/XT+JsIqN0ymPGorFk1PXo5saX7vVmqetUN6WWSpXufywLZI300qJdDn9Kig3g==}
     dependencies:
       '@extractus/article-extractor': 7.3.1
       '@nomland/elephant': 0.2.4

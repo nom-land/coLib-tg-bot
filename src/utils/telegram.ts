@@ -2,7 +2,8 @@ import { Message } from "grammy/types";
 import { Bot } from "grammy";
 import { helpMsg } from "./constants";
 import { settings } from "../config";
-import { getEntities, getMsgText } from "./common";
+import { getEntities, getMessageId, getMsgText } from "./common";
+import { addKeyValue } from "./keyValueStore";
 
 export function mentions(m: Message, username: string) {
     const text = getMsgText(m);
@@ -53,6 +54,7 @@ export function makeMsgLink(msg: Message) {
 export async function handleEvent(
     ctx: any,
     msg: Message,
+    idMap: Map<string, string>,
     processFunc: (...args: any[]) => Promise<{
         curatorId: string;
         noteId: string;
@@ -65,6 +67,15 @@ export async function handleEvent(
     const data = await processFunc(...args);
     if (data) {
         const { curatorId, noteId } = data;
+
+        const msgId = getMessageId(msg);
+
+        const postId = curatorId.toString() + "-" + noteId.toString();
+
+        if (addKeyValue(msgId, postId, settings.idMapTblName)) {
+            idMap.set(msgId, postId);
+        }
+
         await ctx.api.editMessageText(
             res.chat.id,
             res.message_id,

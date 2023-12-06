@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { log } from "./utils/log";
-import Nomland, { parseRecord } from "nomland.js";
+import Nomland from "nomland.js";
 
 import {
     handleEvent,
@@ -10,12 +10,17 @@ import {
 } from "./utils/telegram";
 import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./utils/constants";
-import { getFirstUrl, getMsgAttachments, getMsgText } from "./utils/common";
+import {
+    getFirstUrl,
+    getMessageId,
+    getMsgText,
+    getNoteAttachments,
+} from "./utils/common";
 import { processCuration } from "./utils/nomland";
 import { makeAccount } from "nomland.js";
 import { settings } from "./config";
-import { NoteMetadataAttachmentBase } from "crossbell";
 import { Message } from "grammy/types";
+import { addKeyValue, loadKeyValuePairs } from "./utils/keyValueStore";
 
 async function main() {
     try {
@@ -28,6 +33,9 @@ async function main() {
 
         const nomland = new Nomland(settings.appName, appKey);
         console.log(nomland.getConfig().botConfig);
+
+        const idMap = new Map<string, string>();
+        loadKeyValuePairs(idMap, settings.idMapTblName);
 
         bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
         bot.command("help", async (ctx) => {
@@ -62,21 +70,27 @@ async function main() {
             }
         });
 
-        bot.on("message:file", async (ctx) => {
-            console.log("message:file", ctx.msg);
-
-            // TODO: only the first file will be processed, caused by Telegram design
-            processMessage(ctx as any, nomland, bot, botUsername);
-        });
         // Curation will be processed in the following cases:
         // 1. @Bot && URL: when a message contains both @Bot and URL, the URL will be processed as curation, no matter if the message is a reply.
         // 2. @Bot && !URL: when a message contains @Bot but no URL, the message will be processed as curation if the original message contains URL and !@Bot:
         //    a. The author of the two messages are the same: the original message will be processed as curation. // TODO
         //    b. The author of the two messages are different: the URL and the content of the reply message will be processed as curation, and the curator will be the author of the reply message.
         // 3. @Bot && not covered by 1 and 2: /help
-        bot.on("message:entities:mention", async (ctx) => {
-            console.log("message:entities:mention");
-            processMessage(ctx as any, nomland, bot, botUsername);
+        bot.on("message", async (ctx) => {
+            const msg = ctx.msg;
+            if (mentions(msg, botUsername)) {
+                // TODO: only the first file will be processed, caused by Telegram design
+                processCurationMessage(
+                    ctx as any,
+                    nomland,
+                    bot,
+                    botUsername,
+                    idMap
+                );
+            } else if (msg.reply_to_message) {
+                console.log("message", ctx.msg.text);
+                processDiscussionMessage(ctx as any, nomland, bot, idMap);
+            }
         });
 
         /* DEBUG 
@@ -104,38 +118,38 @@ async function main() {
     }
 }
 
-async function processMessage(
+function getCommunity(msg: Message) {
+    if (msg.chat.type === "private") {
+        return null;
+    }
+
+    return makeAccount(msg.chat);
+}
+
+async function processCurationMessage(
     ctx: CommandContext<Context>,
     nomland: Nomland,
     bot: Bot,
-    botUsername: string
+    botUsername: string,
+    idMap: Map<string, string>
 ) {
     const msg = ctx.msg;
-    if (msg.chat.type === "private") {
-        return;
-    }
 
-    const community = makeAccount(msg.chat);
+    const community = getCommunity(msg);
+    if (!community) return;
 
     const msgText = getMsgText(msg);
     if (!msgText) return;
 
     if (mentions(msg, botUsername)) {
         const url = getFirstUrl(msgText);
-        const attachments = [] as NoteMetadataAttachmentBase<"address">[];
-        if (msg.photo) {
-            const pic = await getMsgAttachments(ctx, msg, bot.token);
-            if (pic) {
-                attachments.push(pic);
-            }
-        }
+        const attachments = await getNoteAttachments(ctx, msg, bot.token);
 
         let notRecognized = true;
 
         if (url) {
             // Scenario 1
-
-            handleEvent(ctx, msg, processCuration, [
+            handleEvent(ctx, msg, idMap, processCuration, [
                 nomland,
                 url,
                 msg,
@@ -155,7 +169,7 @@ async function processMessage(
             if (replyToMsg && replyToMsgText && replyToMsg.from) {
                 const replyToMsgUrl = getFirstUrl(replyToMsgText);
                 if (replyToMsgUrl) {
-                    handleEvent(ctx, msg, processCuration, [
+                    handleEvent(ctx, msg, idMap, processCuration, [
                         nomland,
                         replyToMsgUrl,
                         msg,
@@ -178,4 +192,51 @@ async function processMessage(
         }
     }
 }
+
+async function processDiscussionMessage(
+    ctx: CommandContext<Context>,
+    nomland: Nomland,
+    bot: Bot,
+    idMap: Map<string, string>
+) {
+    const msg = ctx.msg;
+    const reply_to_message = msg.reply_to_message;
+    if (!reply_to_message || !msg.from) return;
+
+    const community = getCommunity(msg);
+    if (!community) return;
+
+    const msgText = getMsgText(msg);
+    if (!msgText) return;
+
+    // if the original msg is a curation, then the reply msg will be processed as discussion
+
+    const replyToPostId = getMessageId(reply_to_message);
+
+    if (!replyToPostId) return;
+
+    console.log("Prepare to process discussion...", replyToPostId);
+
+    const attachments = await getNoteAttachments(ctx, msg, bot.token);
+
+    // TODO: process discussion
+    const { characterId, noteId } = await nomland.processDiscussion(
+        makeAccount(msg.from),
+        community,
+        {
+            content: msgText,
+            attachments,
+        },
+        replyToPostId
+    );
+
+    const msgId = getMessageId(msg);
+
+    const postId = characterId.toString() + "-" + noteId.toString();
+
+    if (addKeyValue(msgId, postId, settings.idMapTblName)) {
+        idMap.set(msgId, postId);
+    }
+}
+
 main();

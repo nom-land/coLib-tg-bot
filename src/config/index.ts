@@ -1,5 +1,6 @@
 export const settings = {
     appName: "nunti", //will be used in the "sources" of metadata
+    idMapTblName: "nunti-idMap",
     defaultCurationList: "general", //will be used in the new created linklist in the community
     prompt: {
         load: "⛏️ Processing...",
