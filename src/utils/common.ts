@@ -1,6 +1,9 @@
 import { Message } from "grammy/types";
 import { RawCuration } from "nomland.js";
 import { makeMsgLink } from "./telegram";
+import { CommandContext, Context } from "grammy";
+import { ipfsUploadFile } from "crossbell/ipfs";
+import { NoteMetadataAttachmentBase } from "crossbell";
 
 const urlRegex = /(http|https):\/\/[^\s]+/g;
 const tagRegex = /#[^\s]+/g;
@@ -21,7 +24,7 @@ export function cleanContent(str: string) {
         .replaceAll(tagRegex, "")
         .trim();
 }
-export function getTagsOrList(str: string) {
+export function getTags(str: string) {
     const tags = str.match(tagRegex);
     return tags ? tags : [];
 }
@@ -63,4 +66,41 @@ export function makeRawCuration(msgs: Message | Message[]) {
     }
 
     return raws;
+}
+
+export function getMsgText(msg: Message) {
+    return msg.text || msg.caption;
+}
+
+export function getEntities(msg: Message) {
+    return msg.entities || msg.caption_entities;
+}
+
+export async function getMsgAttachments(
+    ctx: CommandContext<Context>,
+    msg: Message,
+    botToken: string
+) {
+    try {
+        const res = await ctx.getFile();
+
+        const url = `https://api.telegram.org/file/bot${botToken}/${res.file_path}`;
+
+        const response = await fetch(url);
+        if (!response.ok || !response.body) {
+            throw new Error(`Response error: ${response.statusText}`);
+        }
+
+        const ipfsFile = await ipfsUploadFile(await response.blob());
+        return {
+            address: ipfsFile.url,
+            size_in_bytes: res.file_size,
+            width: msg.photo?.find((p) => p.file_size === res.file_size)?.width,
+            height: msg.photo?.find((p) => p.file_size === res.file_size)
+                ?.height,
+            mime_type: "image/jpeg",
+        } as NoteMetadataAttachmentBase<"address">;
+    } catch (error) {
+        console.error("Fail to fetch photo: ", error);
+    }
 }

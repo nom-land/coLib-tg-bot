@@ -2,11 +2,13 @@ import { Message } from "grammy/types";
 import { Bot } from "grammy";
 import { helpMsg } from "./constants";
 import { settings } from "../config";
+import { getEntities, getMsgText } from "./common";
 
 export function mentions(m: Message, username: string) {
-    const text = m.text;
+    const text = getMsgText(m);
     if (!text) return false;
-    const mentions = m.entities
+
+    const mentions = getEntities(m)
         ?.map((e) => {
             if (e.type === "mention") {
                 return text.slice(e.offset, e.offset + e.length);

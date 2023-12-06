@@ -1,44 +1,37 @@
 import { Message } from "grammy/types";
-import { cleanContent, getTagsOrList, makeRawCuration } from "./common";
-import { settings } from "../config";
+import { cleanContent, getMsgText, getTags, makeRawCuration } from "./common";
 import Nomland, { Accountish, Parser, makeAccount } from "nomland.js";
 import { log } from "./log";
+import { NoteMetadata } from "crossbell";
 
 export async function processCuration(
     nom: Nomland,
     url: string,
     curationMsg: Message,
+    msgAttachments: NoteMetadata["attachments"],
     community: Accountish,
     botName: string,
     parser: Parser
 ) {
     try {
-        if (!curationMsg.text) return null;
+        const text = getMsgText(curationMsg);
+        if (!text) return null;
         if (!curationMsg.from) return null;
 
         const curator = makeAccount(curationMsg.from);
         const raws = makeRawCuration(curationMsg);
 
-        const contentAfterBot = curationMsg.text.split(botName)[1];
-        const tagsOrList = getTagsOrList(contentAfterBot);
-        const comment = cleanContent(curationMsg.text);
-
-        const { tagSuggestions, listSuggestions } = await nom.getTagsAndLists(
-            tagsOrList,
-            community
-        );
-        if (listSuggestions.length == 0) {
-            listSuggestions.push(settings.defaultCurationList);
-        }
+        const contentAfterBot = text.split(botName)[1];
+        const tags = getTags(contentAfterBot).map((t) => t.slice(1));
+        const comment = cleanContent(text);
 
         console.log(
             JSON.stringify({
                 curator,
                 community,
-                lists: listSuggestions,
                 reason: {
                     comment,
-                    tagSuggestions,
+                    tagSuggestions: tags,
                 },
                 raws,
             })
@@ -48,10 +41,11 @@ export async function processCuration(
             {
                 curator,
                 community,
-                lists: listSuggestions,
+                lists: [],
                 reason: {
                     comment,
-                    tagSuggestions,
+                    tagSuggestions: tags,
+                    attachments: msgAttachments,
                 },
                 raws, //TODO: support multiple raws
                 raw: raws[0],
