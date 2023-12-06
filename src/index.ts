@@ -210,12 +210,13 @@ async function processDiscussionMessage(
     if (!msgText) return;
 
     // if the original msg is a curation, then the reply msg will be processed as discussion
+    const replyToMsgId = getMessageId(reply_to_message);
+    if (!replyToMsgId) return;
 
-    const replyToPostId = getMessageId(reply_to_message);
-
+    const replyToPostId = idMap.get(replyToMsgId);
     if (!replyToPostId) return;
 
-    console.log("Prepare to process discussion...", replyToPostId);
+    console.log("Prepare to process discussion...", replyToMsgId);
 
     const attachments = await getNoteAttachments(ctx, msg, bot.token);
 
