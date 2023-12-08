@@ -2,8 +2,18 @@ import { Message } from "grammy/types";
 import { Bot } from "grammy";
 import { helpMsg } from "./constants";
 import { settings } from "../config";
-import { getEntities, getMessageId, getMsgText } from "./common";
+import {
+    getCommunity,
+    getEntities,
+    getMessageId,
+    getMsgText,
+    getNoteAttachments,
+    getPosterAccount,
+    makeRawCuration,
+} from "./common";
 import { addKeyValue } from "./keyValueStore";
+import { processCuration } from "./nomland";
+import NomlandNode from "nomland.js";
 
 export function mentions(m: Message, username: string) {
     const text = getMsgText(m);
@@ -53,20 +63,49 @@ export function makeMsgLink(msg: Message) {
 
 export async function handleEvent(
     ctx: any,
-    msg: Message,
     idMap: Map<string, string>,
-    processFunc: (...args: any[]) => Promise<{
-        curatorId: string;
-        noteId: string;
-    } | null>,
-    args: any[]
+    nom: NomlandNode,
+    url: string,
+    bot: Bot
 ) {
+    const msg = ctx.msg;
+
+    const msgAttachments = await getNoteAttachments(ctx, msg, bot.token);
+
+    const community = getCommunity(msg);
+
+    if (!community) return;
+
     const res = await ctx.reply(settings.prompt.load, {
         reply_to_message_id: msg.message_id,
     });
-    const data = await processFunc(...args);
-    if (data) {
-        const { curatorId, noteId } = data;
+
+    if (!msg.from) return;
+
+    const curator = await getPosterAccount(ctx, bot, nom);
+    if (!curator) return;
+
+    const text = getMsgText(msg);
+    if (!text) return null;
+
+    if (!msg.from) return null;
+
+    const raws = makeRawCuration(msg);
+
+    const result = await processCuration(
+        nom,
+        url,
+        text,
+        raws,
+        curator,
+        msgAttachments,
+        community,
+        bot.botInfo.username,
+        "elephant"
+    );
+
+    if (result) {
+        const { curatorId, noteId } = result;
 
         const msgId = getMessageId(msg);
 

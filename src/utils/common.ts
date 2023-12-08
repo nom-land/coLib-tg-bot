@@ -1,9 +1,14 @@
 import { Message } from "grammy/types";
-import { RawCuration } from "nomland.js";
+import NomlandNode, {
+    RawCuration,
+    makeAccount,
+    formatHandle,
+} from "nomland.js";
 import { makeMsgLink } from "./telegram";
-import { CommandContext, Context } from "grammy";
+import { Bot, CommandContext, Context } from "grammy";
 import { ipfsUploadFile } from "crossbell/ipfs";
 import { NoteMetadataAttachmentBase } from "crossbell";
+import { log } from "./log";
 
 const urlRegex = /(http|https):\/\/[^\s]+/g;
 const tagRegex = /#[^\s]+/g;
@@ -82,6 +87,22 @@ export function getEntities(msg: Message) {
     return msg.entities || msg.caption_entities;
 }
 
+export async function getPhoto(filePath: string, botToken: string) {
+    try {
+        const url = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+
+        const response = await fetch(url);
+        if (!response.ok || !response.body) {
+            log.error(`Response error: ${response.statusText}`);
+        } else {
+            const ipfsFile = await ipfsUploadFile(await response.blob());
+            return ipfsFile;
+        }
+    } catch (error) {
+        log.error(`Response error: ${error}`);
+    }
+}
+
 async function getMsgAttachments(
     ctx: CommandContext<Context>,
     msg: Message,
@@ -90,14 +111,12 @@ async function getMsgAttachments(
     try {
         const res = await ctx.getFile();
 
-        const url = `https://api.telegram.org/file/bot${botToken}/${res.file_path}`;
+        if (!res.file_path) return null;
 
-        const response = await fetch(url);
-        if (!response.ok || !response.body) {
-            throw new Error(`Response error: ${response.statusText}`);
-        }
+        const ipfsFile = await getPhoto(res.file_path, botToken);
 
-        const ipfsFile = await ipfsUploadFile(await response.blob());
+        if (!ipfsFile) return null;
+
         return {
             address: ipfsFile.url,
             size_in_bytes: res.file_size,
@@ -108,6 +127,68 @@ async function getMsgAttachments(
         } as NoteMetadataAttachmentBase<"address">;
     } catch (error) {
         console.error("Fail to fetch photo: ", error);
+    }
+}
+
+export async function getPosterAccount(
+    ctx: CommandContext<Context>,
+    bot: Bot,
+    nomland: NomlandNode
+) {
+    if (!ctx.msg.from) return null;
+    const poster = makeAccount(ctx.msg.from);
+
+    const handle = formatHandle(poster);
+
+    const { data } = await nomland.contract.character.getByHandle({
+        handle,
+    });
+    if (
+        !data.characterId ||
+        !data.metadata?.avatars ||
+        data.metadata?.avatars?.length === 0
+    ) {
+        const ipfsFile = await getUserAvatar(ctx, bot.token);
+
+        if (ipfsFile?.url) {
+            if (
+                !data.metadata?.avatars ||
+                data.metadata?.avatars?.length === 0
+            ) {
+                const oldProfile = data.metadata;
+
+                await nomland.contract.character.setMetadata({
+                    characterId: data.characterId,
+                    metadata: {
+                        avatars: [ipfsFile.url],
+                        ...oldProfile,
+                    },
+                });
+            }
+            poster.avatar = ipfsFile.url;
+        }
+    }
+    return poster;
+}
+
+async function getUserAvatar(ctx: CommandContext<Context>, botToken: string) {
+    const userProfiles = await ctx.getUserProfilePhotos();
+
+    if (userProfiles.total_count > 0) {
+        const avatarPhoto = userProfiles.photos[0].reduce((p1, p2) =>
+            (p1.file_size || 0) > (p2.file_size || 0) ? p1 : p2
+        );
+        const filePathUrl = `https://api.telegram.org/bot${botToken}/getFile?file_id=${avatarPhoto.file_id}`;
+        const response = await fetch(filePathUrl);
+        const data = await response.json();
+
+        if (!response.ok || !response.body || !data.ok) {
+            log.error(`Response error: ${response.statusText}`);
+        }
+
+        const ipfsFile = await getPhoto(data.result.file_path, botToken);
+
+        return ipfsFile;
     }
 }
 
@@ -124,4 +205,13 @@ export async function getNoteAttachments(
         }
     }
     return attachments;
+}
+
+export function getCommunity(msg: Message) {
+    if (msg.chat.type === "private") {
+        // TODO: What private chat means?
+        return null;
+    }
+
+    return makeAccount(msg.chat);
 }

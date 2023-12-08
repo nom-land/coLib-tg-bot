@@ -1,41 +1,23 @@
-import { Message } from "grammy/types";
-import { cleanContent, getMsgText, getTags, makeRawCuration } from "./common";
-import Nomland, { Accountish, Parser, makeAccount } from "nomland.js";
+import { cleanContent, getTags } from "./common";
+import Nomland, { Accountish, Parser, RawCuration } from "nomland.js";
 import { log } from "./log";
 import { NoteMetadata } from "crossbell";
 
 export async function processCuration(
     nom: Nomland,
     url: string,
-    curationMsg: Message,
+    text: string,
+    raws: RawCuration[],
+    curator: Accountish,
     msgAttachments: NoteMetadata["attachments"],
     community: Accountish,
     botName: string,
     parser: Parser
 ) {
     try {
-        const text = getMsgText(curationMsg);
-        if (!text) return null;
-        if (!curationMsg.from) return null;
-
-        const curator = makeAccount(curationMsg.from);
-        const raws = makeRawCuration(curationMsg);
-
         const contentAfterBot = text.split(botName)[1];
         const tags = getTags(contentAfterBot).map((t) => t.slice(1));
         const comment = cleanContent(text);
-
-        console.log(
-            JSON.stringify({
-                curator,
-                community,
-                reason: {
-                    comment,
-                    tagSuggestions: tags,
-                },
-                raws,
-            })
-        );
 
         const { curatorId, noteId } = await nom.processCuration(
             {
@@ -53,6 +35,7 @@ export async function processCuration(
             url,
             parser
         );
+
         return {
             curatorId,
             noteId,

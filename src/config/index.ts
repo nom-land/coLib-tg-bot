@@ -10,7 +10,7 @@ export const settings = {
                 curatorId,
                 noteId
             )}
-            ✉️ Attention: all replies to this curation will be recorded on chain`;
+✉️ Attention: all replies to this curation will be recorded on chain`;
         },
         fail: "😢 Curation is not successfully processed.",
     },

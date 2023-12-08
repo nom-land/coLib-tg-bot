@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0
   nomland.js:
-    specifier: 0.2.0
-    version: 0.2.0(typescript@5.2.2)
+    specifier: 0.2.2
+    version: 0.2.2(typescript@5.2.2)
   tsup:
     specifier: ^7.2.0
     version: 7.2.0(ts-node@10.9.1)(typescript@5.2.2)
@@ -893,7 +893,7 @@ packages:
       eip1193-types: 0.2.1
       exponential-backoff: 3.1.1
       p-limit: 3.1.0
-      viem: 2.0.0-beta.11(typescript@5.2.2)
+      viem: 2.0.0-beta.15(typescript@5.2.2)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -1620,8 +1620,8 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /nomland.js@0.2.0(typescript@5.2.2):
-    resolution: {integrity: sha512-juOHbO8Cs/xwAX4lEJnVoum0/XT+JsIqN0ymPGorFk1PXo5saX7vVmqetUN6WWSpXufywLZI300qJdDn9Kig3g==}
+  /nomland.js@0.2.2(typescript@5.2.2):
+    resolution: {integrity: sha512-MwIcGxqy7mJmiiee+cDn/B2WMIYuHD2mLoPQCiG91ggyjSPRLS1wrJSNxiPod/RLRitHOSoGOWDZtWcmOD98OA==}
     dependencies:
       '@extractus/article-extractor': 7.3.1
       '@nomland/elephant': 0.2.4
@@ -2153,8 +2153,8 @@ packages:
       - zod
     dev: false
 
-  /viem@2.0.0-beta.11(typescript@5.2.2):
-    resolution: {integrity: sha512-r4G1gdH3adVLW8vjGwT9yxYzO48muLHYl7W8aYkBq25z9nIPEAjdT2mnyqQCb6PydidiSiYCxS1W8Hlj/kCVLQ==}
+  /viem@2.0.0-beta.15(typescript@5.2.2):
+    resolution: {integrity: sha512-1T2FqSuPO5eVVDbcFcNZH4lsWIyEyk2Iq7FoLKRPN7rxf7HJE0mXIVLws9WyyXusGa5KAkTPX1rmw37jJGo1xA==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:

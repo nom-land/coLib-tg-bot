@@ -11,13 +11,13 @@ import {
 import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./utils/constants";
 import {
+    getCommunity,
     getFirstUrl,
     getMessageId,
     getMsgText,
     getNoteAttachments,
+    getPosterAccount,
 } from "./utils/common";
-import { processCuration } from "./utils/nomland";
-import { makeAccount } from "nomland.js";
 import { settings } from "./config";
 import { Message } from "grammy/types";
 import { addKeyValue, loadKeyValuePairs } from "./utils/keyValueStore";
@@ -37,7 +37,6 @@ async function main() {
         const idMap = new Map<string, string>();
         loadKeyValuePairs(idMap, settings.idMapTblName);
 
-        bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
         bot.command("help", async (ctx) => {
             const inDM = ctx.msg.chat.type === "private";
             if (inDM) {
@@ -78,15 +77,11 @@ async function main() {
         // 3. @Bot && not covered by 1 and 2: /help
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
+            getPosterAccount(ctx as any, bot, nomland);
+
             if (mentions(msg, botUsername)) {
                 // TODO: only the first file will be processed, caused by Telegram design
-                processCurationMessage(
-                    ctx as any,
-                    nomland,
-                    bot,
-                    botUsername,
-                    idMap
-                );
+                processCurationMessage(ctx as any, nomland, bot, idMap);
             } else if (msg.reply_to_message) {
                 console.log("message", ctx.msg.text);
                 processDiscussionMessage(ctx as any, nomland, bot, idMap);
@@ -118,78 +113,48 @@ async function main() {
     }
 }
 
-function getCommunity(msg: Message) {
-    if (msg.chat.type === "private") {
-        return null;
-    }
-
-    return makeAccount(msg.chat);
-}
-
 async function processCurationMessage(
     ctx: CommandContext<Context>,
     nomland: Nomland,
     bot: Bot,
-    botUsername: string,
     idMap: Map<string, string>
 ) {
     const msg = ctx.msg;
 
-    const community = getCommunity(msg);
-    if (!community) return;
-
     const msgText = getMsgText(msg);
     if (!msgText) return;
 
-    if (mentions(msg, botUsername)) {
-        const url = getFirstUrl(msgText);
-        const attachments = await getNoteAttachments(ctx, msg, bot.token);
+    const url = getFirstUrl(msgText);
+    if (!url) return;
 
-        let notRecognized = true;
+    let notRecognized = true;
 
-        if (url) {
-            // Scenario 1
-            handleEvent(ctx, msg, idMap, processCuration, [
-                nomland,
-                url,
-                msg,
-                attachments,
-                community,
-                botUsername,
-                "elephant",
-            ]);
+    if (url) {
+        // Scenario 1
+        handleEvent(ctx, idMap, nomland, url, bot);
 
-            notRecognized = false;
-        } else {
-            // Scenario 2
-            const replyToMsg = msg.reply_to_message;
+        notRecognized = false;
+    } else {
+        // Scenario 2
+        const replyToMsg = msg.reply_to_message;
 
-            const replyToMsgText = getMsgText(replyToMsg as Message);
+        const replyToMsgText = getMsgText(replyToMsg as Message);
 
-            if (replyToMsg && replyToMsgText && replyToMsg.from) {
-                const replyToMsgUrl = getFirstUrl(replyToMsgText);
-                if (replyToMsgUrl) {
-                    handleEvent(ctx, msg, idMap, processCuration, [
-                        nomland,
-                        replyToMsgUrl,
-                        msg,
-                        attachments,
-                        community,
-                        botUsername,
-                        "elephant",
-                    ]);
+        if (replyToMsg && replyToMsgText && replyToMsg.from) {
+            const replyToMsgUrl = getFirstUrl(replyToMsgText);
+            if (replyToMsgUrl) {
+                handleEvent(ctx, idMap, nomland, replyToMsgUrl, bot);
 
-                    notRecognized = false;
-                }
+                notRecognized = false;
             }
         }
+    }
 
-        if (notRecognized) {
-            const helpMsg = await helpInfoInGroup(bot, ctx.msg);
-            ctx.reply(helpMsg, {
-                reply_to_message_id: msg.message_id,
-            });
-        }
+    if (notRecognized) {
+        const helpMsg = await helpInfoInGroup(bot, ctx.msg);
+        ctx.reply(helpMsg, {
+            reply_to_message_id: msg.message_id,
+        });
     }
 }
 
@@ -218,10 +183,13 @@ async function processDiscussionMessage(
 
     console.log("Prepare to process discussion...", replyToMsgId);
 
+    const poster = await getPosterAccount(ctx, bot, nomland);
+    if (!poster) return;
+
     const attachments = await getNoteAttachments(ctx, msg, bot.token);
 
     const { characterId, noteId } = await nomland.processDiscussion(
-        makeAccount(msg.from),
+        poster,
         community,
         {
             content: msgText,
