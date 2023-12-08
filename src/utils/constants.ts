@@ -24,8 +24,9 @@ ${adminCommands}
   
   Message A: This book is amazing!!! https://example.com/u/xyz 
   Message B(replying to A): @${botUsername} #Romantic #AmazingBook
+  
+  4. Replying to any existed curation message will also be recorded with the curation together. (Welcome! Discussion is encouraged!)
   `;
-    // 4. Replying to any existed curation message will also be recorded with the curation together. (Welcome! Discussion is encouraged!)
     else
         return `Hi! I'm nunti.
       
@@ -38,6 +39,6 @@ ${adminCommands}
     Message A: This book is amazing!!! https://example.com/u/xyz 
     Message B(replying to A): @${botUsername} #Romantic #AmazingBook
 
-🕘 Coming Soon: Replying to the curation message will be recorded; Managing the curation list will be possible.
+🕘 Coming Soon: Managing the curation list will be possible.
     `;
 }

@@ -9,8 +9,8 @@ export const settings = {
             return `🎉 Curation is successfully processed. See: ${feedbackUrl(
                 curatorId,
                 noteId
-            )}`;
-            // ✉️ Attention: all messages in this thread or replies to this curation will be recorded on chain`;
+            )}
+            ✉️ Attention: all replies to this curation will be recorded on chain`;
         },
         fail: "😢 Curation is not successfully processed.",
     },

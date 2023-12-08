@@ -220,7 +220,6 @@ async function processDiscussionMessage(
 
     const attachments = await getNoteAttachments(ctx, msg, bot.token);
 
-    // TODO: process discussion
     const { characterId, noteId } = await nomland.processDiscussion(
         makeAccount(msg.from),
         community,
