@@ -23,7 +23,6 @@ export async function processCuration(
             {
                 curator,
                 community,
-                lists: [],
                 reason: {
                     comment,
                     tagSuggestions: tags,
