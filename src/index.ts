@@ -88,7 +88,7 @@ async function main() {
             }
         });
 
-        /* DEBUG 
+        /* DEBUG
         bot.on("msg::url", async (ctx) => {
             // const profiles = await ctx.getUserProfilePhotos();
             // console.log(profiles.photos);
@@ -98,7 +98,7 @@ async function main() {
             if (ctx.msg.text) {
                 const url = getFirstUrl(ctx.msg.text);
                 if (url) {
-                    const res = await parseRecord(url, "elephant");
+                    const res = await parseRecord(url, "extractus");
                     console.log(res);
                 }
             }
@@ -125,7 +125,6 @@ async function processCurationMessage(
     if (!msgText) return;
 
     const url = getFirstUrl(msgText);
-    if (!url) return;
 
     let notRecognized = true;
 
