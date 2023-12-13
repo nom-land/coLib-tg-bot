@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0
   nomland.js:
-    specifier: 0.2.8
-    version: 0.2.8(typescript@5.2.2)
+    specifier: 0.2.9
+    version: 0.2.9(typescript@5.2.2)
   tsup:
     specifier: ^7.2.0
     version: 7.2.0(ts-node@10.9.1)(typescript@5.2.2)
@@ -236,7 +236,7 @@ packages:
       '@sapphire/snowflake': 3.5.1
       '@vladfrangu/async_event_emitter': 2.2.4
       discord-api-types: 0.37.61
-      magic-bytes.js: 1.6.0
+      magic-bytes.js: 1.7.0
       tslib: 2.6.2
       undici: 5.27.2
     dev: false
@@ -258,7 +258,7 @@ packages:
       '@vladfrangu/async_event_emitter': 2.2.4
       discord-api-types: 0.37.61
       tslib: 2.6.2
-      ws: 8.15.0
+      ws: 8.15.1
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -555,8 +555,8 @@ packages:
       fastq: 1.15.0
     dev: false
 
-  /@nomland/elephant@0.2.4:
-    resolution: {integrity: sha512-L9iu+Bkv8PlkOI1GeaE81B12fh6t1E1yxrLrGXkc9GlpYEHRgyzCu/HDScfMFGX90+rhwnwnpjuLTwba6X91+A==}
+  /@nomland/elephant@0.2.5:
+    resolution: {integrity: sha512-esrTQUBv7Yxy5RY/73bE8+TfWFo2+eStDK2wqReoUaqK0wGRxRSYrybPkCvOF+Zh7Dz5FY37b4LODvI2vfMr5A==}
     dependencies:
       '@azure/ai-language-text': 1.1.0
       '@mozilla/readability': 0.4.4
@@ -591,8 +591,8 @@ packages:
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
     dev: false
 
-  /@scure/base@1.1.3:
-    resolution: {integrity: sha512-/+SgoRjLq7Xlf0CWuLHq2LUZeL/w65kfzAPG5NH9pcmBhs+nunQTn4gvdwgMTIXnt9b2C/1SeL2XiysZEyIC9Q==}
+  /@scure/base@1.1.5:
+    resolution: {integrity: sha512-Brj9FiG2W1MRQSTB212YVPRrcbjkv48FoZi/u4l/zds/ieRrqsh7aUf6CLwkAq61oKXr/ZlTzlY66gLIj3TFTQ==}
     dev: false
 
   /@scure/bip32@1.3.2:
@@ -600,14 +600,14 @@ packages:
     dependencies:
       '@noble/curves': 1.2.0
       '@noble/hashes': 1.3.2
-      '@scure/base': 1.1.3
+      '@scure/base': 1.1.5
     dev: false
 
   /@scure/bip39@1.2.1:
     resolution: {integrity: sha512-Z3/Fsz1yr904dduJD0NpiyRHhRYHdcnyh73FZWiV+/qhWi83wNJ3NWolYqCEN+ZWsUz2TWwajJggcRE9r1zUYg==}
     dependencies:
       '@noble/hashes': 1.3.2
-      '@scure/base': 1.1.3
+      '@scure/base': 1.1.5
     dev: false
 
   /@tootallnate/once@2.0.0:
@@ -644,8 +644,8 @@ packages:
       '@types/node': 20.9.0
     dev: false
 
-  /@urql/core@4.2.0:
-    resolution: {integrity: sha512-GRkZ4kECR9UohWAjiSk2UYUetco6/PqSrvyC4AH6g16tyqEShA63M232cfbE1J9XJPaGNjia14Gi+oOqzp144w==}
+  /@urql/core@4.2.2:
+    resolution: {integrity: sha512-TP1kheq9bnrEdnVbJqh0g0ZY/wfdpPeAzjiiDK+Tm+Pbi0O1Xdu6+fUJ/wJo5QpHZzkIyya4/AecG63e6scFqQ==}
     dependencies:
       '@0no-co/graphql.web': 1.0.4
       wonka: 6.3.4
@@ -1412,7 +1412,7 @@ packages:
       whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
       whatwg-url: 12.0.1
-      ws: 8.15.0
+      ws: 8.15.1
       xml-name-validator: 4.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -1463,8 +1463,8 @@ packages:
       yallist: 4.0.0
     dev: true
 
-  /magic-bytes.js@1.6.0:
-    resolution: {integrity: sha512-eOGBE+NSCwU9dKKox93BPHjX4KSxIuiRY1/H1lkfxIagT0Llhs6bkRk8iqoP/0aeDl7FEZPa+ln5lay5mcNY4w==}
+  /magic-bytes.js@1.7.0:
+    resolution: {integrity: sha512-YzVU2+/hrjwx8xcgAw+ffNq3jkactpj+f1iSL4LonrFKhvnwDzHSqtFdk/MMRP53y9ScouJ7cKEnqYsJwsHoYA==}
     dev: false
 
   /make-error@1.3.6:
@@ -1619,12 +1619,12 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /nomland.js@0.2.8(typescript@5.2.2):
-    resolution: {integrity: sha512-jic1t7NkOe0wPOMGNrvpFlWZjUETCVRgWxmfSjXmI/bHYuBpky7AXht0NjOIXsF/VZFqac2cdnswim+YXx14Zw==}
+  /nomland.js@0.2.9(typescript@5.2.2):
+    resolution: {integrity: sha512-pCftMNHhZsaVOD7kLYM5D7c+VLt1hmXUd+p66Dr1Ih+Gv64wqqD4vABB0t1kJsYQJlriGQtVU8z7COcq9THU9A==}
     dependencies:
       '@extractus/article-extractor': 7.3.1
-      '@nomland/elephant': 0.2.4
-      '@urql/core': 4.2.0
+      '@nomland/elephant': 0.2.5
+      '@urql/core': 4.2.2
       browser-bunyan: 1.8.0
       bunyan: 1.8.15
       crossbell: 1.9.0(typescript@5.2.2)
@@ -2272,8 +2272,8 @@ packages:
         optional: true
     dev: false
 
-  /ws@8.15.0:
-    resolution: {integrity: sha512-H/Z3H55mrcrgjFwI+5jKavgXvwQLtfPCUEp6pi35VhoB0pfcHnSoyuTzkBEZpzq49g1193CUEwIvmsjcotenYw==}
+  /ws@8.15.1:
+    resolution: {integrity: sha512-W5OZiCjXEmk0yZ66ZN82beM5Sz7l7coYxpRkzS+p9PP+ToQry8szKh+61eNktr7EA9DOwvFGhfC605jDHbP6QQ==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
