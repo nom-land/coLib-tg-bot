@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0
   nomland.js:
-    specifier: 0.2.5
-    version: 0.2.5(typescript@5.2.2)
+    specifier: 0.2.8
+    version: 0.2.8(typescript@5.2.2)
   tsup:
     specifier: ^7.2.0
     version: 7.2.0(ts-node@10.9.1)(typescript@5.2.2)
@@ -258,7 +258,7 @@ packages:
       '@vladfrangu/async_event_emitter': 2.2.4
       discord-api-types: 0.37.61
       tslib: 2.6.2
-      ws: 8.14.2
+      ws: 8.15.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -1619,8 +1619,8 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /nomland.js@0.2.5(typescript@5.2.2):
-    resolution: {integrity: sha512-hwg4Apx3WqY1K+xDU2H4zBQ5f/uTH+4jYdZWNMuelOMsURjfhpmWpxfx3H7mV8g+tN6wtqC2+1Pr39yzkLGfbw==}
+  /nomland.js@0.2.8(typescript@5.2.2):
+    resolution: {integrity: sha512-jic1t7NkOe0wPOMGNrvpFlWZjUETCVRgWxmfSjXmI/bHYuBpky7AXht0NjOIXsF/VZFqac2cdnswim+YXx14Zw==}
     dependencies:
       '@extractus/article-extractor': 7.3.1
       '@nomland/elephant': 0.2.4
