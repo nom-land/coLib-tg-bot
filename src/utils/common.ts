@@ -87,17 +87,20 @@ export function getEntities(msg: Message) {
     return msg.entities || msg.caption_entities;
 }
 
+export async function getIpfsByUrl(url: string) {
+    const response = await fetch(url);
+    if (!response.ok || !response.body) {
+        throw new Error(`Response error: ${response.statusText}`);
+    } else {
+        const ipfsFile = await ipfsUploadFile(await response.blob());
+        return ipfsFile;
+    }
+}
+
 export async function getPhoto(filePath: string, botToken: string) {
     try {
         const url = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
-
-        const response = await fetch(url);
-        if (!response.ok || !response.body) {
-            log.error(`Response error: ${response.statusText}`);
-        } else {
-            const ipfsFile = await ipfsUploadFile(await response.blob());
-            return ipfsFile;
-        }
+        return getIpfsByUrl(url);
     } catch (error) {
         log.error(`Response error: ${error}`);
     }
@@ -150,7 +153,7 @@ export async function getPosterAccount(
     ) {
         const ipfsFile = await getUserAvatar(ctx, bot.token);
 
-        if (ipfsFile?.url) {
+        if (ipfsFile?.url && data.characterId) {
             if (
                 !data.metadata?.avatars ||
                 data.metadata?.avatars?.length === 0

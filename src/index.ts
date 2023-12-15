@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { log } from "./utils/log";
-import Nomland from "nomland.js";
+import Nomland, { parseRecord } from "nomland.js";
 
 import {
     handleEvent,
@@ -77,13 +77,11 @@ async function main() {
         // 3. @Bot && not covered by 1 and 2: /help
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
-            getPosterAccount(ctx as any, bot, nomland);
 
             if (mentions(msg, botUsername)) {
                 // TODO: only the first file will be processed, caused by Telegram design
                 processCurationMessage(ctx as any, nomland, bot, idMap);
             } else if (msg.reply_to_message) {
-                console.log("message", ctx.msg.text);
                 processDiscussionMessage(ctx as any, nomland, bot, idMap);
             }
         });
@@ -119,41 +117,45 @@ async function processCurationMessage(
     bot: Bot,
     idMap: Map<string, string>
 ) {
-    const msg = ctx.msg;
+    try {
+        const msg = ctx.msg;
 
-    const msgText = getMsgText(msg);
-    if (!msgText) return;
+        const msgText = getMsgText(msg);
+        if (!msgText) return;
 
-    const url = getFirstUrl(msgText);
+        const url = getFirstUrl(msgText);
 
-    let notRecognized = true;
+        let notRecognized = true;
 
-    if (url) {
-        // Scenario 1
-        handleEvent(ctx, idMap, nomland, url, bot);
+        if (url) {
+            // Scenario 1
+            handleEvent(ctx, idMap, nomland, url, bot);
 
-        notRecognized = false;
-    } else {
-        // Scenario 2
-        const replyToMsg = msg.reply_to_message;
+            notRecognized = false;
+        } else {
+            // Scenario 2
+            const replyToMsg = msg.reply_to_message;
 
-        const replyToMsgText = getMsgText(replyToMsg as Message);
+            const replyToMsgText = getMsgText(replyToMsg as Message);
 
-        if (replyToMsg && replyToMsgText && replyToMsg.from) {
-            const replyToMsgUrl = getFirstUrl(replyToMsgText);
-            if (replyToMsgUrl) {
-                handleEvent(ctx, idMap, nomland, replyToMsgUrl, bot);
+            if (replyToMsg && replyToMsgText && replyToMsg.from) {
+                const replyToMsgUrl = getFirstUrl(replyToMsgText);
+                if (replyToMsgUrl) {
+                    handleEvent(ctx, idMap, nomland, replyToMsgUrl, bot);
 
-                notRecognized = false;
+                    notRecognized = false;
+                }
             }
         }
-    }
 
-    if (notRecognized) {
-        const helpMsg = await helpInfoInGroup(bot, ctx.msg);
-        ctx.reply(helpMsg, {
-            reply_to_message_id: msg.message_id,
-        });
+        if (notRecognized) {
+            const helpMsg = await helpInfoInGroup(bot, ctx.msg);
+            ctx.reply(helpMsg, {
+                reply_to_message_id: msg.message_id,
+            });
+        }
+    } catch (e) {
+        console.log(e);
     }
 }
 
