@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0
   nomland.js:
-    specifier: 0.2.10
-    version: 0.2.10(typescript@5.2.2)
+    specifier: 0.2.11
+    version: 0.2.11(typescript@5.2.2)
   tsup:
     specifier: ^7.2.0
     version: 7.2.0(ts-node@10.9.1)(typescript@5.2.2)
@@ -555,8 +555,8 @@ packages:
       fastq: 1.15.0
     dev: false
 
-  /@nomland/elephant@0.2.6:
-    resolution: {integrity: sha512-UjyM3J4O4Ny7ycQQyioSd9Gi0DyKtFYu9tTncGKPGuHiZiJRQN3bmvzmRok5XSjFuLn2ReTfR/3iyfmD7BJbKg==}
+  /@nomland/elephant@0.2.8:
+    resolution: {integrity: sha512-fw4WX9wmu1GmEkK4oQ4NhOH930QgMT7B//fiIz3hND8NFPmX49OfyHAE1mZJYUt3rVeIeQwVf+zXEr+RbbO6Rw==}
     dependencies:
       '@azure/ai-language-text': 1.1.0
       '@mozilla/readability': 0.4.4
@@ -1619,11 +1619,11 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /nomland.js@0.2.10(typescript@5.2.2):
-    resolution: {integrity: sha512-whBuQmAQNvM0mfU0madTR2FWw6ywfgU7du3UpX+jEzJKjADsp13MFHXCqCvGYgSERne4tAmGliY1bauc3EjvLA==}
+  /nomland.js@0.2.11(typescript@5.2.2):
+    resolution: {integrity: sha512-ZHF6DraxTrYbLxb+ueyoibrTfBvWqIKDm/jzIqqAIlKElHH9OmXzQBNF+o3WkKvcqvQWyzZ2OJmrx/1t4lARnQ==}
     dependencies:
       '@extractus/article-extractor': 7.3.1
-      '@nomland/elephant': 0.2.6
+      '@nomland/elephant': 0.2.8
       '@urql/core': 4.2.2
       browser-bunyan: 1.8.0
       bunyan: 1.8.15
