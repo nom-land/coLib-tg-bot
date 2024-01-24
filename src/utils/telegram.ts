@@ -104,6 +104,8 @@ export async function handleEvent(
 
         const raws = makeRawCuration(msg);
 
+        const replyToPostId = getReplyToMsgId(msg, idMap);
+
         const result = await processCuration(
             nom,
             url,
@@ -113,6 +115,7 @@ export async function handleEvent(
             msgAttachments,
             community,
             bot.botInfo.username,
+            replyToPostId,
             "elephant"
         );
         if (result) {
@@ -141,4 +144,18 @@ export async function handleEvent(
     } catch (e) {
         console.log(e);
     }
+}
+
+export function getReplyToMsgId(msg: Message, idMap: Map<string, string>) {
+    const reply_to_message = msg.reply_to_message;
+    if (!reply_to_message) return;
+
+    const replyToMsgId = getMessageId(reply_to_message);
+
+    if (!replyToMsgId) return;
+
+    const replyToPostId = idMap.get(replyToMsgId);
+    if (!replyToPostId) return;
+
+    return replyToPostId;
 }

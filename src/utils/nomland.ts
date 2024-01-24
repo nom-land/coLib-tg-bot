@@ -12,6 +12,7 @@ export async function processCuration(
     msgAttachments: NoteMetadata["attachments"],
     community: Accountish,
     botName: string,
+    replyToPostId: string | undefined,
     parser: Parser
 ) {
     try {
@@ -32,6 +33,7 @@ export async function processCuration(
                 raw: raws[0],
             },
             url,
+            replyToPostId,
             parser
         );
 

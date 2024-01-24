@@ -3,6 +3,7 @@ import { log } from "./utils/log";
 import Nomland, { parseRecord } from "nomland.js";
 
 import {
+    getReplyToMsgId,
     handleEvent,
     helpInfoInGroup,
     isAdmin,
@@ -30,6 +31,8 @@ async function main() {
         await bot.init();
 
         const botUsername = bot.botInfo.username;
+
+        console.log("Bot username: ", botUsername);
 
         const nomland = new Nomland(settings.appName, appKey);
         console.log(nomland.getConfig().botConfig);
@@ -96,12 +99,12 @@ async function main() {
             if (ctx.msg.text) {
                 const url = getFirstUrl(ctx.msg.text);
                 if (url) {
-                    const res = await parseRecord(url, "extractus");
+                    const res = await parseRecord(url, "elephant");
                     console.log(res);
                 }
             }
         });
-        */
+        // */
 
         bot.start();
         log.info("🎉 Bot is up and running.");
@@ -166,8 +169,6 @@ async function processDiscussionMessage(
     idMap: Map<string, string>
 ) {
     const msg = ctx.msg;
-    const reply_to_message = msg.reply_to_message;
-    if (!reply_to_message || !msg.from) return;
 
     const community = getCommunity(msg);
     if (!community) return;
@@ -176,13 +177,10 @@ async function processDiscussionMessage(
     if (!msgText) return;
 
     // if the original msg is a curation, then the reply msg will be processed as discussion
-    const replyToMsgId = getMessageId(reply_to_message);
-    if (!replyToMsgId) return;
-
-    const replyToPostId = idMap.get(replyToMsgId);
+    const replyToPostId = getReplyToMsgId(msg, idMap);
     if (!replyToPostId) return;
 
-    console.log("Prepare to process discussion...", replyToMsgId);
+    console.log("Prepare to process discussion...", replyToPostId);
 
     const poster = await getPosterAccount(ctx, bot, nomland);
     if (!poster) return;
