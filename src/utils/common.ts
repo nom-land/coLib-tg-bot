@@ -1,10 +1,6 @@
 import { Message } from "grammy/types";
-import NomlandNode, {
-    RawCuration,
-    makeAccount,
-    formatHandle,
-} from "nomland.js";
-import { makeMsgLink } from "./telegram";
+import NomlandNode, { makeAccount, formatHandle } from "nomland.js";
+import { RawMessage, makeMsgLink } from "./telegram";
 import { Bot, CommandContext, Context } from "grammy";
 import { ipfsUploadFile } from "crossbell/ipfs";
 import { NoteMetadataAttachmentBase } from "crossbell";
@@ -63,11 +59,11 @@ export function makeRawCuration(msgs: Message | Message[]) {
             content: msg.text,
             sources: ["Telegram", communityName, topicName],
             date_published: convertDate(msg.date),
-        } as RawCuration;
+        } as RawMessage;
         if (msgLink) {
             raw.external_url = msgLink;
         }
-        raws.push(raw);
+        raws.push(JSON.stringify(raw));
     }
 
     return raws;
@@ -210,11 +206,19 @@ export async function getNoteAttachments(
     return attachments;
 }
 
-export function getCommunity(msg: Message) {
+export function getContext(msg: Message) {
     if (msg.chat.type === "private") {
         // TODO: What private chat means?
         return null;
     }
 
     return makeAccount(msg.chat);
+}
+
+export function getNoteKey(noteKeyString: string) {
+    const [characterId, noteId] = noteKeyString.split("-");
+    return {
+        characterId,
+        noteId,
+    };
 }

@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0
   nomland.js:
-    specifier: 0.3.3
-    version: 0.3.3(typescript@5.2.2)
+    specifier: 0.5.0
+    version: 0.5.0(typescript@5.2.2)
   tsup:
     specifier: ^7.2.0
     version: 7.2.0(ts-node@10.9.1)(typescript@5.2.2)
@@ -188,6 +188,10 @@ packages:
 
   /@crossbell/ipfs-fetch@0.0.19:
     resolution: {integrity: sha512-0Yf9+MMTSD+JJkFbNaK/s+kl3CXhr4oq2yj3K0dvheB+e8uykcpM7yomxHie/sr0ushw3G7Ppf5NXYkfH0eiSw==}
+    dev: false
+
+  /@crossbell/ipfs-fetch@0.0.21:
+    resolution: {integrity: sha512-wPNLptEPy64/7WMz7bhS5QVYfjproCr3ACgeQoJzmNKvH2FNDlF6FjMB9XNwV0spAczGb/SueNzW8p6BBLXHnw==}
     dev: false
 
   /@cspotcode/source-map-support@0.8.1:
@@ -555,8 +559,8 @@ packages:
       fastq: 1.15.0
     dev: false
 
-  /@nomland/elephant@0.2.8:
-    resolution: {integrity: sha512-fw4WX9wmu1GmEkK4oQ4NhOH930QgMT7B//fiIz3hND8NFPmX49OfyHAE1mZJYUt3rVeIeQwVf+zXEr+RbbO6Rw==}
+  /@nomland/elephant@0.2.9:
+    resolution: {integrity: sha512-+h12A1EjJBon1x9lu3TmUqI8V1gwTGInGnpbZHhSsf3oN6fFPaEFYl028vs62/2h5Gg8hrH7m5UqAX0h4nnV5Q==}
     dependencies:
       '@azure/ai-language-text': 1.1.0
       '@mozilla/readability': 0.4.4
@@ -695,6 +699,20 @@ packages:
       typescript: 5.2.2
     dev: false
 
+  /abitype@1.0.0(typescript@5.2.2):
+    resolution: {integrity: sha512-NMeMah//6bJ56H5XRj8QCV4AwuW6hB6zqz2LnhhLdcWVQOsXki6/Pn3APeqxCma62nXIcmZWdu1DlHWS74umVQ==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+      zod: ^3 >=3.22.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      zod:
+        optional: true
+    dependencies:
+      typescript: 5.2.2
+    dev: false
+
   /abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
@@ -741,6 +759,13 @@ packages:
 
   /async-cache-dedupe@2.0.0:
     resolution: {integrity: sha512-SrW6PbmCHRQBSpPG8mkPIZZC5AgC08sbzl56GyGemBLVdVUl8mQW4+WCYHp5XZfixIdkL40jKf3UlT/P6Q3p5w==}
+    dependencies:
+      mnemonist: 0.39.6
+      safe-stable-stringify: 2.4.3
+    dev: false
+
+  /async-cache-dedupe@2.1.0:
+    resolution: {integrity: sha512-hBoXEwpJOUIjce7HrwbGN9RlYZM6+XblU+ClZ0AzrV4y5UGDqMR/EUAg2S2p0GF0b0IYOreFEt5RD0eiUwa2Qg==}
     dependencies:
       mnemonist: 0.39.6
       safe-stable-stringify: 2.4.3
@@ -882,16 +907,17 @@ packages:
       which: 2.0.2
     dev: false
 
-  /crossbell@1.6.4(typescript@5.2.2):
-    resolution: {integrity: sha512-6wjWaPW0HqePxKNjaC/YEcknHe5Kx4Icbtoo2p5LQd6c9ggXMpyGSXGnFqvWcU7vxdmcbEfdwYuzFeEPS3jXCA==}
+  /crossbell@1.11.7(typescript@5.2.2):
+    resolution: {integrity: sha512-GgznXkpF8mwisKDRR7Gb7gkDY1SqobGkkhUcFcz6fcaRyZ6d1Z5CFXeDkfkNSJs/MppV05PcdTyHAXtewKMDsA==}
     engines: {node: '>=16.14.0'}
     dependencies:
-      '@crossbell/ipfs-fetch': 0.0.19
+      '@crossbell/ipfs-fetch': 0.0.21
+      async-cache-dedupe: 2.1.0
       async-retry: 1.3.3
       eip1193-types: 0.2.1
       exponential-backoff: 3.1.1
       p-limit: 3.1.0
-      viem: 1.19.3(typescript@5.2.2)
+      viem: 2.9.0(typescript@5.2.2)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -1636,21 +1662,21 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /nomland.js@0.3.3(typescript@5.2.2):
-    resolution: {integrity: sha512-akWdh8Ph8WC5lNchMsxK3zcu6NTTw/PrRa7RG4hXIINqKsbUvXDX95Yyq6UZywCLNJELzWuzmPaeWHpReJOGng==}
+  /nomland.js@0.5.0(typescript@5.2.2):
+    resolution: {integrity: sha512-hu8Tnmt2LwgZmfBTZfkSPdJzKwrkhOGQeB0bgMo9X8nPyBSjOUr+RHVOLzzUnR8zo0BpCWfB75mT5Vo71g00Cw==}
     dependencies:
       '@extractus/article-extractor': 7.3.1
-      '@nomland/elephant': 0.2.8
+      '@nomland/elephant': 0.2.9
       '@urql/core': 4.2.2
       browser-bunyan: 1.8.0
       bunyan: 1.8.15
-      crossbell: 1.6.4(typescript@5.2.2)
+      crossbell: 1.11.7(typescript@5.2.2)
       discord.js: 14.14.1
       dotenv: 16.3.1
       eip1193-types: 0.2.1
       md5: 2.3.0
       punycode: 2.3.1
-      viem: 1.19.3(typescript@5.2.2)
+      viem: 2.9.0(typescript@5.2.2)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -2183,6 +2209,29 @@ packages:
       '@scure/bip32': 1.3.2
       '@scure/bip39': 1.2.1
       abitype: 0.10.0(typescript@5.2.2)
+      isows: 1.0.3(ws@8.13.0)
+      typescript: 5.2.2
+      ws: 8.13.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+    dev: false
+
+  /viem@2.9.0(typescript@5.2.2):
+    resolution: {integrity: sha512-7jNrY9GY4aLGU2qX4/TCXpA9qR4PDx5ctQyJpxoh8jDmlV0Rh2FLlnJsgJs9sAB8cKbNafkRTYQtuMA3OOn0JA==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      '@adraffy/ens-normalize': 1.10.0
+      '@noble/curves': 1.2.0
+      '@noble/hashes': 1.3.2
+      '@scure/bip32': 1.3.2
+      '@scure/bip39': 1.2.1
+      abitype: 1.0.0(typescript@5.2.2)
       isows: 1.0.3(ws@8.13.0)
       typescript: 5.2.2
       ws: 8.13.0

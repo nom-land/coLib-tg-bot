@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { log } from "./utils/log";
-import Nomland, { parseRecord } from "nomland.js";
+import Nomland from "nomland.js";
 
 import {
     getReplyToMsgId,
@@ -12,11 +12,12 @@ import {
 import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./utils/constants";
 import {
-    getCommunity,
+    getContext,
     getFirstUrl,
     getMessageId,
     getMsgText,
     getNoteAttachments,
+    getNoteKey,
     getPosterAccount,
 } from "./utils/common";
 import { settings } from "./config";
@@ -83,9 +84,9 @@ async function main() {
 
             if (mentions(msg, botUsername)) {
                 // TODO: only the first file will be processed, caused by Telegram design
-                processCurationMessage(ctx as any, nomland, bot, idMap);
+                processShare(ctx as any, nomland, bot, idMap);
             } else if (msg.reply_to_message) {
-                processDiscussionMessage(ctx as any, nomland, bot, idMap);
+                processReply(ctx as any, nomland, bot, idMap);
             }
         });
 
@@ -114,7 +115,7 @@ async function main() {
     }
 }
 
-async function processCurationMessage(
+async function processShare(
     ctx: CommandContext<Context>,
     nomland: Nomland,
     bot: Bot,
@@ -138,15 +139,15 @@ async function processCurationMessage(
         } else {
             // Scenario 2
             const replyToMsg = msg.reply_to_message;
+            if (replyToMsg) {
+                const replyToMsgText = getMsgText(replyToMsg as Message);
+                if (replyToMsgText && replyToMsg.from) {
+                    const replyToMsgUrl = getFirstUrl(replyToMsgText);
+                    if (replyToMsgUrl) {
+                        handleEvent(ctx, idMap, nomland, replyToMsgUrl, bot);
 
-            const replyToMsgText = getMsgText(replyToMsg as Message);
-
-            if (replyToMsg && replyToMsgText && replyToMsg.from) {
-                const replyToMsgUrl = getFirstUrl(replyToMsgText);
-                if (replyToMsgUrl) {
-                    handleEvent(ctx, idMap, nomland, replyToMsgUrl, bot);
-
-                    notRecognized = false;
+                        notRecognized = false;
+                    }
                 }
             }
         }
@@ -162,7 +163,7 @@ async function processCurationMessage(
     }
 }
 
-async function processDiscussionMessage(
+async function processReply(
     ctx: CommandContext<Context>,
     nomland: Nomland,
     bot: Bot,
@@ -170,8 +171,8 @@ async function processDiscussionMessage(
 ) {
     const msg = ctx.msg;
 
-    const community = getCommunity(msg);
-    if (!community) return;
+    const context = getContext(msg);
+    if (!context) return;
 
     const msgText = getMsgText(msg);
     if (!msgText) return;
@@ -187,14 +188,14 @@ async function processDiscussionMessage(
 
     const attachments = await getNoteAttachments(ctx, msg, bot.token);
 
-    const { characterId, noteId } = await nomland.processDiscussion(
+    const { characterId, noteId } = await nomland.createReply(
         poster,
-        community,
+        context,
         {
             content: msgText,
             attachments,
         },
-        replyToPostId
+        getNoteKey(replyToPostId)
     );
 
     const msgId = getMessageId(msg);

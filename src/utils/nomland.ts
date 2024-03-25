@@ -1,16 +1,16 @@
-import { cleanContent, getTags } from "./common";
-import Nomland, { Accountish, Parser, RawCuration } from "nomland.js";
+import { cleanContent, getNoteKey, getTags } from "./common";
+import Nomland, { Accountish, Parser, ShareInput } from "nomland.js";
 import { log } from "./log";
 import { NoteMetadata } from "crossbell";
 
-export async function processCuration(
-    nom: Nomland,
+export async function processShare(
+    nomland: Nomland,
     url: string,
     text: string,
-    raws: RawCuration[],
+    raws: string[],
     curator: Accountish,
     msgAttachments: NoteMetadata["attachments"],
-    community: Accountish,
+    context: Accountish,
     botName: string,
     replyToPostId: string | undefined,
     parser: Parser
@@ -20,27 +20,26 @@ export async function processCuration(
         const tags = getTags(contentAfterBot).map((t) => t.slice(1));
         const comment = cleanContent(text);
 
-        const { curatorId, noteId } = await nom.processCuration(
-            {
-                curator,
-                community,
-                reason: {
-                    comment,
-                    tagSuggestions: tags,
-                    attachments: msgAttachments,
-                },
-                raws, //TODO: support multiple raws
-                raw: raws[0],
+        const shareInput = {
+            character: curator,
+            context,
+            shareDetails: {
+                content: comment,
+                tags: tags,
+                attachments: msgAttachments,
+                rawContent: raws,
             },
-            url,
-            replyToPostId,
-            parser
-        );
+            entityUrl: url,
+            parser,
+        } as ShareInput;
 
-        return {
-            curatorId,
-            noteId,
-        };
+        if (replyToPostId) {
+            shareInput.replyTo = getNoteKey(replyToPostId);
+        }
+
+        const { noteKey } = await nomland.createShare(shareInput);
+
+        return noteKey;
     } catch (e) {
         log.error(e);
         return null;

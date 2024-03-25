@@ -3,7 +3,7 @@ import { Bot } from "grammy";
 import { helpMsg } from "./constants";
 import { settings } from "../config";
 import {
-    getCommunity,
+    getContext,
     getEntities,
     getMessageId,
     getMsgText,
@@ -12,8 +12,14 @@ import {
     makeRawCuration,
 } from "./common";
 import { addKeyValue } from "./keyValueStore";
-import { processCuration } from "./nomland";
+import { processShare } from "./nomland";
 import NomlandNode from "nomland.js";
+export interface RawMessage {
+    content: string;
+    sources: string[];
+    date_published: string;
+    external_url: string;
+}
 
 export function mentions(m: Message, username: string) {
     const text = getMsgText(m);
@@ -84,7 +90,7 @@ export async function handleEvent(
 
         const msgAttachments = await getNoteAttachments(ctx, msg, bot.token);
 
-        const community = getCommunity(msg);
+        const community = getContext(msg);
 
         if (!community) return;
 
@@ -106,7 +112,7 @@ export async function handleEvent(
 
         const replyToPostId = getReplyToMsgId(msg, idMap);
 
-        const result = await processCuration(
+        const result = await processShare(
             nom,
             url,
             text,
@@ -119,11 +125,11 @@ export async function handleEvent(
             "elephant"
         );
         if (result) {
-            const { curatorId, noteId } = result;
+            const { characterId, noteId } = result;
 
             const msgId = getMessageId(msg);
 
-            const postId = curatorId.toString() + "-" + noteId.toString();
+            const postId = characterId.toString() + "-" + noteId.toString();
 
             if (addKeyValue(msgId, postId, settings.idMapTblName)) {
                 idMap.set(msgId, postId);
@@ -132,7 +138,7 @@ export async function handleEvent(
             await ctx.api.editMessageText(
                 res.chat.id,
                 res.message_id,
-                settings.prompt.succeed(curatorId, noteId)
+                settings.prompt.succeed(characterId, noteId)
             );
         } else {
             await ctx.api.editMessageText(
