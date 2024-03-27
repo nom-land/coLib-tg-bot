@@ -235,10 +235,10 @@ async function processShareInChannel(
         // TODO: filter url
 
         if (url) {
-            const author = channelAdmins.find(
-                (admin) =>
-                    admin.user.first_name + " " + admin.user.last_name ===
-                    msg.forward_signature
+            const author = channelAdmins.find((admin) =>
+                admin.user.last_name
+                    ? admin.user.first_name + " " + admin.user.last_name
+                    : admin.user.first_name === msg.forward_signature
             )?.user;
             if (!author) {
                 log.warn("Author not found: ", msg);
