@@ -1,5 +1,10 @@
-import { Message } from "grammy/types";
-import NomlandNode, { makeAccount, formatHandle } from "nomland.js";
+import { Message, UserProfilePhotos } from "grammy/types";
+import NomlandNode, {
+    makeAccount,
+    formatHandle,
+    Accountish,
+    TelegramUser,
+} from "nomland.js";
 import { RawMessage, makeMsgLink } from "./telegram";
 import { Bot, CommandContext, Context } from "grammy";
 import { ipfsUploadFile } from "crossbell/ipfs";
@@ -129,6 +134,48 @@ async function getMsgAttachments(
     }
 }
 
+export async function getChannelPosterAccount(
+    ctx: CommandContext<Context>,
+    author: TelegramUser,
+    bot: Bot,
+    nomland: NomlandNode
+) {
+    if (!ctx.msg.from) return null;
+    const poster = makeAccount(author);
+
+    const handle = formatHandle(poster);
+
+    const { data } = await nomland.contract.character.getByHandle({
+        handle,
+    });
+    if (
+        !data.characterId ||
+        !data.metadata?.avatars ||
+        data.metadata?.avatars?.length === 0
+    ) {
+        const ipfsFile = await getUserAvatar(ctx, bot.token, author.id);
+
+        if (ipfsFile?.url && data.characterId) {
+            if (
+                !data.metadata?.avatars ||
+                data.metadata?.avatars?.length === 0
+            ) {
+                const oldProfile = data.metadata;
+
+                await nomland.contract.character.setMetadata({
+                    characterId: data.characterId,
+                    metadata: {
+                        avatars: [ipfsFile.url],
+                        ...oldProfile,
+                    },
+                });
+            }
+            poster.avatar = ipfsFile.url;
+        }
+    }
+    return poster;
+}
+
 export async function getPosterAccount(
     ctx: CommandContext<Context>,
     bot: Bot,
@@ -170,8 +217,16 @@ export async function getPosterAccount(
     return poster;
 }
 
-async function getUserAvatar(ctx: CommandContext<Context>, botToken: string) {
-    const userProfiles = await ctx.getUserProfilePhotos();
+async function getUserAvatar(
+    ctx: CommandContext<Context>,
+    botToken: string,
+    userId?: number
+) {
+    let userProfiles: UserProfilePhotos;
+    if (userId) userProfiles = await ctx.api.getUserProfilePhotos(userId);
+    else userProfiles = await ctx.getUserProfilePhotos();
+
+    console.log("userProfiles", userProfiles);
 
     if (userProfiles.total_count > 0) {
         const avatarPhoto = userProfiles.photos[0].reduce((p1, p2) =>
@@ -206,10 +261,19 @@ export async function getNoteAttachments(
     return attachments;
 }
 
-export function getContext(msg: Message) {
+export function getContext(
+    msg: Message,
+    ctxMap?: Map<string, string>
+): Accountish | null {
     if (msg.chat.type === "private") {
         // TODO: What private chat means?
         return null;
+    }
+
+    // Firstly to get the context id from group mappings
+    const groupId = msg.chat.id.toString().slice(4);
+    if (ctxMap && ctxMap.has(groupId)) {
+        return Number(ctxMap.get(groupId)) || null;
     }
 
     return makeAccount(msg.chat);

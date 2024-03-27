@@ -13,7 +13,7 @@ import {
 } from "./common";
 import { addKeyValue } from "./keyValueStore";
 import { processShare } from "./nomland";
-import NomlandNode from "nomland.js";
+import NomlandNode, { Account, Accountish } from "nomland.js";
 export interface RawMessage {
     content: string;
     sources: string[];
@@ -78,9 +78,11 @@ export function parseMsgLink(link: string) {
     return { message_thread_id, msgId };
 }
 
-export async function handleEvent(
+export async function processShare2(
     ctx: any,
+    author: Accountish,
     idMap: Map<string, string>,
+    ctxMap: Map<string, string>,
     nom: NomlandNode,
     url: string,
     bot: Bot
@@ -90,7 +92,7 @@ export async function handleEvent(
 
         const msgAttachments = await getNoteAttachments(ctx, msg, bot.token);
 
-        const community = getContext(msg);
+        const community = getContext(msg, ctxMap);
 
         if (!community) return;
 
@@ -99,9 +101,6 @@ export async function handleEvent(
         });
 
         if (!msg.from) return;
-
-        const curator = await getPosterAccount(ctx, bot, nom);
-        if (!curator) return;
 
         const text = getMsgText(msg);
         if (!text) return null;
@@ -117,7 +116,7 @@ export async function handleEvent(
             url,
             text,
             raws,
-            curator,
+            author,
             msgAttachments,
             community,
             bot.botInfo.username,

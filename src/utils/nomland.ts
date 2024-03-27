@@ -16,15 +16,15 @@ export async function processShare(
     parser: Parser
 ) {
     try {
-        const contentAfterBot = text.split(botName)[1];
-        const tags = getTags(contentAfterBot).map((t) => t.slice(1));
-        const comment = cleanContent(text);
+        // const contentAfterBot = text.split(botName)[1]; // TODO? remove it?
+        const tags = getTags(text).map((t) => t.slice(1));
+        const content = cleanContent(text);
 
         const shareInput = {
-            character: curator,
+            author: curator,
             context,
-            shareDetails: {
-                content: comment,
+            details: {
+                content,
                 tags: tags,
                 attachments: msgAttachments,
                 rawContent: raws,

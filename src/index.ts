@@ -1,10 +1,10 @@
 import "dotenv/config";
 import { log } from "./utils/log";
-import Nomland from "nomland.js";
+import Nomland, { TelegramGroup, TelegramUser, makeAccount } from "nomland.js";
 
 import {
     getReplyToMsgId,
-    handleEvent,
+    processShare2,
     helpInfoInGroup,
     isAdmin,
     mentions,
@@ -12,6 +12,7 @@ import {
 import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./utils/constants";
 import {
+    getChannelPosterAccount,
     getContext,
     getFirstUrl,
     getMessageId,
@@ -21,7 +22,11 @@ import {
     getPosterAccount,
 } from "./utils/common";
 import { settings } from "./config";
-import { Message } from "grammy/types";
+import {
+    ChatMemberAdministrator,
+    ChatMemberOwner,
+    Message,
+} from "grammy/types";
 import { addKeyValue, loadKeyValuePairs } from "./utils/keyValueStore";
 
 async function main() {
@@ -40,6 +45,9 @@ async function main() {
 
         const idMap = new Map<string, string>();
         loadKeyValuePairs(idMap, settings.idMapTblName);
+
+        const contextMap = new Map<string, string>();
+        loadKeyValuePairs(contextMap, settings.contextMapTblName);
 
         bot.command("help", async (ctx) => {
             const inDM = ctx.msg.chat.type === "private";
@@ -73,20 +81,46 @@ async function main() {
             }
         });
 
-        // Curation will be processed in the following cases:
-        // 1. @Bot && URL: when a message contains both @Bot and URL, the URL will be processed as curation, no matter if the message is a reply.
-        // 2. @Bot && !URL: when a message contains @Bot but no URL, the message will be processed as curation if the original message contains URL and !@Bot:
-        //    a. The author of the two messages are the same: the original message will be processed as curation. // TODO
-        //    b. The author of the two messages are different: the URL and the content of the reply message will be processed as curation, and the curator will be the author of the reply message.
-        // 3. @Bot && not covered by 1 and 2: /help
+        // Share will be processed in the following cases:
+        // 1. It's a channel broadcast message and contains a URL.
+        // 2. It's not a channel message and it's a reply to a channel broadcast
+        //      2.1 The reply message contains URL: the URL will be processed as share.
+        // 3. It's not a channel message and it's not a reply to a channel broadcast
+        //      3.1 @Bot && URL: when a message contains both @Bot and URL, the URL will be processed as share, no matter if the message is a reply.
+        //      3.2 @Bot && !URL: when a message contains @Bot but no URL, the message will be processed as curation if the original message contains URL and !@Bot:
+        //          a. The author of the two messages are the same: the original message will be processed as curation. // TODO
+        //          b. The author of the two messages are different: the URL and the content of the reply message will be processed as curation, and the curator will be the author of the reply message.
+        //      3.3. @Bot && not covered by 1 and 2: /help
+
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
 
-            if (mentions(msg, botUsername)) {
-                // TODO: only the first file will be processed, caused by Telegram design
-                processShare(ctx as any, nomland, bot, idMap);
-            } else if (msg.reply_to_message) {
-                processReply(ctx as any, nomland, bot, idMap);
+            if (msg.sender_chat?.type === "channel") {
+                const admins = await bot.api.getChatAdministrators(
+                    msg.sender_chat.id
+                );
+                processShareInChannel(
+                    ctx as any,
+                    nomland,
+                    bot,
+                    idMap,
+                    contextMap,
+                    admins
+                );
+            } else {
+                console.log("Message received: ", msg);
+                if (mentions(msg, botUsername)) {
+                    // TODO: only the first file will be processed, caused by Telegram design
+                    processShareInGroup(
+                        ctx as any,
+                        nomland,
+                        bot,
+                        idMap,
+                        contextMap
+                    );
+                } else if (msg.reply_to_message) {
+                    processReply(ctx as any, nomland, bot, idMap, contextMap);
+                }
             }
         });
 
@@ -115,11 +149,13 @@ async function main() {
     }
 }
 
-async function processShare(
+// @Bot will trigger processing share in group
+async function processShareInGroup(
     ctx: CommandContext<Context>,
     nomland: Nomland,
     bot: Bot,
-    idMap: Map<string, string>
+    idMap: Map<string, string>,
+    ctxMap: Map<string, string>
 ) {
     try {
         const msg = ctx.msg;
@@ -132,21 +168,37 @@ async function processShare(
         let notRecognized = true;
 
         if (url) {
-            // Scenario 1
-            handleEvent(ctx, idMap, nomland, url, bot);
-
-            notRecognized = false;
+            // Scenario 1: the message itself is a share
+            const author = await getPosterAccount(ctx, bot, nomland);
+            if (author) {
+                processShare2(ctx, author, idMap, ctxMap, nomland, url, bot);
+                notRecognized = false;
+            }
         } else {
-            // Scenario 2
+            // Scenario 2: the reply to message is a share
             const replyToMsg = msg.reply_to_message;
             if (replyToMsg) {
                 const replyToMsgText = getMsgText(replyToMsg as Message);
                 if (replyToMsgText && replyToMsg.from) {
                     const replyToMsgUrl = getFirstUrl(replyToMsgText);
                     if (replyToMsgUrl) {
-                        handleEvent(ctx, idMap, nomland, replyToMsgUrl, bot);
-
-                        notRecognized = false;
+                        const author = await getPosterAccount(
+                            ctx,
+                            bot,
+                            nomland
+                        );
+                        if (author) {
+                            processShare2(
+                                ctx,
+                                author,
+                                idMap,
+                                ctxMap,
+                                nomland,
+                                replyToMsgUrl,
+                                bot
+                            );
+                            notRecognized = false;
+                        }
                     }
                 }
             }
@@ -163,25 +215,79 @@ async function processShare(
     }
 }
 
+// Channel broadcast message will trigger processing share in channel
+async function processShareInChannel(
+    ctx: CommandContext<Context>,
+    nomland: Nomland,
+    bot: Bot,
+    idMap: Map<string, string>,
+    ctxMap: Map<string, string>,
+    channelAdmins: (ChatMemberOwner | ChatMemberAdministrator)[]
+) {
+    try {
+        const msg = ctx.msg;
+
+        const msgText = getMsgText(msg);
+        if (!msgText) return;
+
+        // TODO: multiple urls
+        const url = getFirstUrl(msgText);
+        // TODO: filter url
+
+        if (url) {
+            const author = channelAdmins.find(
+                (admin) =>
+                    admin.user.first_name + " " + admin.user.last_name ===
+                    msg.forward_signature
+            )?.user;
+            if (!author) {
+                log.warn("Author not found: ", msg);
+                return;
+            }
+            const authorAccount = await getChannelPosterAccount(
+                ctx,
+                author,
+                bot,
+                nomland
+            );
+            console.log("Author account: ", authorAccount);
+            if (authorAccount) {
+                processShare2(
+                    ctx,
+                    authorAccount,
+                    idMap,
+                    ctxMap,
+                    nomland,
+                    url,
+                    bot
+                );
+            }
+        }
+    } catch (e) {
+        console.log(e);
+    }
+}
+
 async function processReply(
     ctx: CommandContext<Context>,
     nomland: Nomland,
     bot: Bot,
-    idMap: Map<string, string>
+    idMap: Map<string, string>,
+    ctxMap: Map<string, string>
 ) {
     const msg = ctx.msg;
 
-    const context = getContext(msg);
+    const context = getContext(msg, ctxMap);
     if (!context) return;
 
     const msgText = getMsgText(msg);
     if (!msgText) return;
 
-    // if the original msg is a curation, then the reply msg will be processed as discussion
+    // if the original msg is a share, then the reply msg will be processed as reply
     const replyToPostId = getReplyToMsgId(msg, idMap);
     if (!replyToPostId) return;
 
-    console.log("Prepare to process discussion...", replyToPostId);
+    console.log("Prepare to process reply...", replyToPostId);
 
     const poster = await getPosterAccount(ctx, bot, nomland);
     if (!poster) return;
