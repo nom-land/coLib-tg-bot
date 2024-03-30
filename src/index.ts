@@ -8,6 +8,7 @@ import {
     helpInfoInGroup,
     isAdmin,
     mentions,
+    makeMsgLink,
 } from "./utils/telegram";
 import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./utils/constants";
@@ -16,6 +17,7 @@ import {
     getContext,
     getFirstUrl,
     getMessageId,
+    getMsgOrigin,
     getMsgText,
     getNoteAttachments,
     getNoteKey,
@@ -94,14 +96,14 @@ async function main() {
 
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
-            if (msg.chat.type === "private") {
+            if (getMsgOrigin(msg) === "private") {
                 ctx.reply(helpMsg(botUsername, "dm"));
                 return;
             }
 
-            if (msg.sender_chat?.type === "channel") {
+            if (getMsgOrigin(msg) === "channel") {
                 const admins = await bot.api.getChatAdministrators(
-                    msg.sender_chat.id
+                    msg.sender_chat!.id
                 );
                 processShareInChannel(
                     ctx as any,
@@ -112,7 +114,6 @@ async function main() {
                     admins
                 );
             } else {
-                console.log("Message received: ", msg);
                 if (mentions(msg, botUsername)) {
                     // TODO: only the first file will be processed, caused by Telegram design
                     processShareInGroup(

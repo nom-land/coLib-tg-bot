@@ -6,7 +6,7 @@ import NomlandNode, {
     TelegramUser,
     NoteDetails,
 } from "nomland.js";
-import { RawMessage, makeMsgLink } from "./telegram";
+import { makeMsgLink } from "./telegram";
 import { Bot, CommandContext, Context } from "grammy";
 import { ipfsUploadFile } from "crossbell/ipfs";
 import { NoteMetadataAttachmentBase } from "crossbell";
@@ -77,6 +77,17 @@ export function getShareDetails(msg: Message) {
     }
 
     return raw;
+}
+
+export function getMsgOrigin(msg: Message) {
+    if (msg.chat.type === "private") {
+        return "private";
+    }
+    if (msg.sender_chat?.type === "channel") {
+        return "channel";
+    } else {
+        return "group";
+    }
 }
 
 export function getMsgText(msg: Message) {

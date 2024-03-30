@@ -6,6 +6,7 @@ import {
     getContext,
     getEntities,
     getMessageId,
+    getMsgOrigin,
     getMsgText,
     getNoteAttachments,
     getNoteKey,
@@ -58,14 +59,23 @@ export async function helpInfoInGroup(bot: Bot, fromMsg: Message) {
 // make message link
 export function makeMsgLink(msg: Message) {
     // TODO: public/private group has different logic
-    if (msg.chat.type === "supergroup") {
+    if (getMsgOrigin(msg) === "group") {
         //TODO: double check
         return `https://t.me/c/${msg.chat.id.toString().slice(4)}/${(
             msg.message_thread_id || 1
         ).toString()}/${msg.message_id.toString()}`;
-    } else {
-        return null;
+    } else if (getMsgOrigin(msg) === "channel") {
+        const channelHandle = (msg.sender_chat! as any).username;
+        const channelId = msg.sender_chat!.id.toString().slice(4);
+        const msgId = (msg as any).forward_origin?.message_id.toString();
+        if (msgId && channelHandle) {
+            return `https://t.me/${channelHandle}/${msgId}`;
+        }
+        if (msgId && channelId) {
+            return `https://t.me/c/${channelId}/${msgId}`;
+        }
     }
+    return null;
 }
 
 export function parseMsgLink(link: string) {
