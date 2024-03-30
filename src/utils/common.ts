@@ -94,9 +94,16 @@ export function getMsgText(msg: Message) {
     return msg.text || msg.caption;
 }
 
+export function getChatId(msg: Message) {
+    return msg.chat.id.toString().slice(4);
+}
+
+export function getSenderChatId(msg: Message) {
+    return msg.sender_chat?.id.toString().slice(4);
+}
+
 export function getMessageId(msg: Message) {
-    const msgId =
-        msg.chat.id.toString().slice(4) + "-" + msg.message_id.toString();
+    const msgId = getChatId(msg) + "-" + msg.message_id.toString();
     return msgId;
 }
 
@@ -287,7 +294,7 @@ export function getContext(
     }
 
     // Firstly to get the context id from group mappings
-    const groupId = msg.chat.id.toString().slice(4);
+    const groupId = getChatId(msg);
     if (ctxMap && ctxMap.has(groupId)) {
         return Number(ctxMap.get(groupId)) || null;
     }

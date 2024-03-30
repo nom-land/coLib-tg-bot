@@ -3,6 +3,7 @@ import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./constants";
 import { settings } from "../config";
 import {
+    getChatId,
     getContext,
     getEntities,
     getMessageId,
@@ -10,6 +11,7 @@ import {
     getMsgText,
     getNoteAttachments,
     getNoteKey,
+    getSenderChatId,
     getShareDetails,
 } from "./common";
 import { addKeyValue } from "./keyValueStore";
@@ -61,12 +63,13 @@ export function makeMsgLink(msg: Message) {
     // TODO: public/private group has different logic
     if (getMsgOrigin(msg) === "group") {
         //TODO: double check
-        return `https://t.me/c/${msg.chat.id.toString().slice(4)}/${(
+        return `https://t.me/c/${getChatId(msg)}/${(
             msg.message_thread_id || 1
         ).toString()}/${msg.message_id.toString()}`;
     } else if (getMsgOrigin(msg) === "channel") {
         const channelHandle = (msg.sender_chat! as any).username;
-        const channelId = msg.sender_chat!.id.toString().slice(4);
+        const channelId = getSenderChatId(msg);
+
         const msgId = (msg as any).forward_origin?.message_id.toString();
         if (msgId && channelHandle) {
             return `https://t.me/${channelHandle}/${msgId}`;
