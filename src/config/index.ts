@@ -11,9 +11,9 @@ export const settings = {
                 curatorId,
                 noteId
             )}
-✉️ Attention: all replies to this share will be recorded on chain`;
+✉️ Attention: all replies will also be recorded.`;
         },
-        fail: "😢 Share is not successfully processed.",
+        fail: "😢 Nunti needs more time to process sharing. But don’t worry, nunti will continue trying and update the progress.",
     },
 };
 

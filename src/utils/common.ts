@@ -4,6 +4,7 @@ import NomlandNode, {
     formatHandle,
     Accountish,
     TelegramUser,
+    NoteDetails,
 } from "nomland.js";
 import { RawMessage, makeMsgLink } from "./telegram";
 import { Bot, CommandContext, Context } from "grammy";
@@ -45,33 +46,37 @@ export function convertDate(date: number) {
     }
 }
 
-export function makeRawCuration(msgs: Message | Message[]) {
-    const raws = [];
-    if (!Array.isArray(msgs)) {
-        msgs = [msgs];
-    }
-    for (const msg of msgs) {
-        //TODO: icon_custom_emoji_id and icon_color
-        let communityName = "Telegram Community";
-        if ("title" in msg.chat) {
-            communityName = msg.chat.title;
-        }
+// get message details without attachment
+export function getShareDetails(msg: Message) {
+    const text = getMsgText(msg);
+    if (!text) return null;
 
-        const topicName =
-            msg.reply_to_message?.forum_topic_created?.name || "General";
-        const msgLink = makeMsgLink(msg);
-        const raw = {
-            content: msg.text,
-            sources: ["Telegram", communityName, topicName],
-            date_published: convertDate(msg.date),
-        } as RawMessage;
-        if (msgLink) {
-            raw.external_url = msgLink;
-        }
-        raws.push(JSON.stringify(raw));
+    //TODO: icon_custom_emoji_id and icon_color
+    let communityName = "Telegram Community";
+    if ("title" in msg.chat) {
+        communityName = msg.chat.title;
     }
 
-    return raws;
+    const topicName =
+        msg.reply_to_message?.forum_topic_created?.name || "General";
+    const msgLink = makeMsgLink(msg);
+
+    // const contentAfterBot = text.split(botName)[1]; // TODO? remove it?
+    const tags = getTags(text).map((t) => t.slice(1));
+    const content = cleanContent(text);
+
+    const raw = {
+        content,
+        rawContent: msg.text,
+        tags,
+        sources: ["Telegram", communityName, topicName],
+        date_published: convertDate(msg.date),
+    } as NoteDetails;
+    if (msgLink) {
+        raw.external_url = msgLink;
+    }
+
+    return raw;
 }
 
 export function getMsgText(msg: Message) {

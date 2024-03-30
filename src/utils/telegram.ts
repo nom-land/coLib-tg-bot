@@ -1,5 +1,5 @@
 import { Message } from "grammy/types";
-import { Bot } from "grammy";
+import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./constants";
 import { settings } from "../config";
 import {
@@ -8,12 +8,12 @@ import {
     getMessageId,
     getMsgText,
     getNoteAttachments,
-    getPosterAccount,
-    makeRawCuration,
+    getNoteKey,
+    getShareDetails,
 } from "./common";
 import { addKeyValue } from "./keyValueStore";
-import { processShare } from "./nomland";
-import NomlandNode, { Account, Accountish } from "nomland.js";
+import { createShare } from "./nomland";
+import NomlandNode, { Accountish } from "nomland.js";
 export interface RawMessage {
     content: string;
     sources: string[];
@@ -78,8 +78,8 @@ export function parseMsgLink(link: string) {
     return { message_thread_id, msgId };
 }
 
-export async function processShare2(
-    ctx: any,
+export async function processShareMsg(
+    ctx: CommandContext<Context>,
     author: Accountish,
     idMap: Map<string, string>,
     ctxMap: Map<string, string>,
@@ -105,22 +105,21 @@ export async function processShare2(
         const text = getMsgText(msg);
         if (!text) return null;
 
-        if (!msg.from) return null;
+        const details = getShareDetails(msg);
+        if (!details) return;
 
-        const raws = makeRawCuration(msg);
+        details.attachments = msgAttachments;
 
         const replyToPostId = getReplyToMsgId(msg, idMap);
+        const replyTo = replyToPostId ? getNoteKey(replyToPostId) : null;
 
-        const result = await processShare(
+        const result = await createShare(
             nom,
             url,
-            text,
-            raws,
+            details,
             author,
-            msgAttachments,
             community,
-            bot.botInfo.username,
-            replyToPostId,
+            replyTo,
             "elephant"
         );
         if (result) {

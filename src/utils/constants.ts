@@ -12,7 +12,7 @@ export function helpMsg(botUsername: string, mode: "dm" | "group" | "admin") {
     if (mode === "dm")
         return `
   Hi! I'm nunti. I have to be used in a group. If you are admin of a group, you can add me to the group and give me the admin permission. I can help your community have better sharing experience and help your community easily build your brand.
-      
+    
   1. To manage your community shares, you can use the following commands(admin permission required):
 ${adminCommands}
 
@@ -20,12 +20,12 @@ ${adminCommands}
   
   This book is amazing!!! https://example.com/u/xyz @${botUsername} #Romantic #AmazingBook
   
-  3. You can also reply to a message containing URL to make a curation(no permission required). e.g.
+  3. You can also reply to a message containing URL to make a share(no permission required). e.g.
   
   Message A: This book is amazing!!! https://example.com/u/xyz 
   Message B(replying to A): @${botUsername} #Romantic #AmazingBook
   
-  4. Replying to any existed share message will also be recorded with the curation together. (Welcome! Discussion is encouraged!)
+  4. Replying to any existed share message will also be recorded with the share together. (Welcome! Discussion is encouraged!)
   `;
     else
         return `Hi! I'm nunti.

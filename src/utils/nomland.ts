@@ -1,40 +1,32 @@
-import { cleanContent, getNoteKey, getTags } from "./common";
-import Nomland, { Accountish, Parser, ShareInput } from "nomland.js";
+import Nomland, {
+    Accountish,
+    NoteDetails,
+    NoteKey,
+    Parser,
+    ShareInput,
+} from "nomland.js";
 import { log } from "./log";
-import { NoteMetadata } from "crossbell";
 
-export async function processShare(
+export async function createShare(
     nomland: Nomland,
     url: string,
-    text: string,
-    raws: string[],
+    details: NoteDetails,
     curator: Accountish,
-    msgAttachments: NoteMetadata["attachments"],
     context: Accountish,
-    botName: string,
-    replyToPostId: string | undefined,
+    replyToPostId: NoteKey | null,
     parser: Parser
 ) {
     try {
-        // const contentAfterBot = text.split(botName)[1]; // TODO? remove it?
-        const tags = getTags(text).map((t) => t.slice(1));
-        const content = cleanContent(text);
-
         const shareInput = {
             author: curator,
             context,
-            details: {
-                content,
-                tags: tags,
-                attachments: msgAttachments,
-                rawContent: raws,
-            },
+            details,
             entityUrl: url,
             parser,
         } as ShareInput;
 
         if (replyToPostId) {
-            shareInput.replyTo = getNoteKey(replyToPostId);
+            shareInput.replyTo = replyToPostId;
         }
 
         const { noteKey } = await nomland.createShare(shareInput);

@@ -4,7 +4,7 @@ import Nomland, { TelegramGroup, TelegramUser, makeAccount } from "nomland.js";
 
 import {
     getReplyToMsgId,
-    processShare2,
+    processShareMsg,
     helpInfoInGroup,
     isAdmin,
     mentions,
@@ -94,6 +94,10 @@ async function main() {
 
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
+            if (msg.chat.type === "private") {
+                ctx.reply(helpMsg(botUsername, "dm"));
+                return;
+            }
 
             if (msg.sender_chat?.type === "channel") {
                 const admins = await bot.api.getChatAdministrators(
@@ -171,7 +175,7 @@ async function processShareInGroup(
             // Scenario 1: the message itself is a share
             const author = await getPosterAccount(ctx, bot, nomland);
             if (author) {
-                processShare2(ctx, author, idMap, ctxMap, nomland, url, bot);
+                processShareMsg(ctx, author, idMap, ctxMap, nomland, url, bot);
                 notRecognized = false;
             }
         } else {
@@ -188,7 +192,7 @@ async function processShareInGroup(
                             nomland
                         );
                         if (author) {
-                            processShare2(
+                            processShareMsg(
                                 ctx,
                                 author,
                                 idMap,
@@ -252,7 +256,7 @@ async function processShareInChannel(
             );
             console.log("Author account: ", authorAccount);
             if (authorAccount) {
-                processShare2(
+                processShareMsg(
                     ctx,
                     authorAccount,
                     idMap,
