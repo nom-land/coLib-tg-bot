@@ -118,7 +118,8 @@ export async function processShareMsg(
     ctxMap: Map<string, string>,
     nom: NomlandNode,
     url: string,
-    bot: Bot
+    bot: Bot,
+    msgOrigin: "channel" | "group"
 ) {
     try {
         const msg = ctx.msg;
@@ -156,11 +157,22 @@ export async function processShareMsg(
             const msgKey = getMessageKey(msg);
 
             storeMsg(idMap, msgKey, shareNoteKey);
-            await ctx.api.editMessageText(
-                res.chat.id,
-                res.message_id,
-                settings.prompt.succeed(shareNoteKey)
-            );
+            if (msgOrigin === "group") {
+                await ctx.api.editMessageText(
+                    res.chat.id,
+                    res.message_id,
+                    settings.prompt.groupSucceed(shareNoteKey)
+                );
+            } else {
+                await ctx.api.editMessageText(
+                    res.chat.id,
+                    res.message_id,
+                    settings.prompt.channelSucceed(shareNoteKey),
+                    {
+                        parse_mode: "HTML",
+                    }
+                );
+            }
         } else {
             await ctx.api.editMessageText(
                 res.chat.id,

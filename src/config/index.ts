@@ -1,4 +1,3 @@
-import { Note } from "crossbell";
 import { NoteKey } from "nomland.js";
 
 export const settings = {
@@ -11,12 +10,18 @@ export const settings = {
     prompt: {
         load: "⛏️ Processing...",
         // (Sorry I'm a little slow for now - but all my content is stored decentrally using blockchain so it's worth it)",
-        succeed(noteKey: NoteKey<string>) {
+        groupSucceed(noteKey: NoteKey<string>) {
             return `🎉 Share is successfully processed. See: ${feedbackUrl(
                 noteKey
             )}
 ✉️ All replies will also be recorded.`;
         },
+        channelSucceed(noteKey: NoteKey<string>) {
+            return `📒 Discussion aggregation feature is supported by <a href="${feedbackUrl(
+                noteKey
+            )}">CoLib</a>.`;
+        },
+
         fail: "😢 Nunti needs more time to process sharing. But don’t worry, nunti will continue trying and update the progress.",
     },
 };

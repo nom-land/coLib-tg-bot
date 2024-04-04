@@ -234,11 +234,14 @@ async function main() {
                                 );
                                 ctx.api.sendMessage(
                                     "-100" + shareParams.channelChatId,
-                                    settings.prompt.succeed(shareNoteKey),
+                                    settings.prompt.channelSucceed(
+                                        shareNoteKey
+                                    ),
                                     {
                                         reply_to_message_id: Number(
                                             shareParams.chatMsgId
                                         ),
+                                        parse_mode: "HTML",
                                     }
                                 );
                             } else {
@@ -312,7 +315,10 @@ async function main() {
                             ctx.api.editMessageText(
                                 "-100" + chatId,
                                 Number(chatMsgId),
-                                settings.prompt.succeed(shareNoteKey)
+                                settings.prompt.channelSucceed(shareNoteKey),
+                                {
+                                    parse_mode: "HTML",
+                                }
                             );
                         } else {
                             reply("Fail to process.");
@@ -411,7 +417,16 @@ async function processShareInGroup(
             // Scenario 1: the message itself is a share
             const author = await getPosterAccount(msg.from, bot, ctx, nomland);
             if (author) {
-                processShareMsg(ctx, author, idMap, ctxMap, nomland, url, bot);
+                processShareMsg(
+                    ctx,
+                    author,
+                    idMap,
+                    ctxMap,
+                    nomland,
+                    url,
+                    bot,
+                    "group"
+                );
                 notRecognized = false;
             }
         } else {
@@ -436,7 +451,8 @@ async function processShareInGroup(
                                 ctxMap,
                                 nomland,
                                 replyToMsgUrl,
-                                bot
+                                bot,
+                                "group"
                             );
                             notRecognized = false;
                         }
@@ -493,7 +509,8 @@ async function processShareInChannel(
                     ctxMap,
                     nomland,
                     url,
-                    bot
+                    bot,
+                    "channel"
                 );
             }
         }
