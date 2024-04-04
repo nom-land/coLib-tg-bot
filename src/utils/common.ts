@@ -1,11 +1,21 @@
-import { Message, UserProfilePhotos } from "grammy/types";
-import NomlandNode, {
+import {
+    ChatMemberAdministrator,
+    ChatMemberOwner,
+    Message,
+    User,
+    UserProfilePhotos,
+} from "grammy/types";
+import Nomland, {
     makeAccount,
     formatHandle,
     Accountish,
     TelegramUser,
     NoteDetails,
+    NoteKey,
 } from "nomland.js";
+import { addKeyValue } from "./keyValueStore";
+import { settings } from "../config";
+
 import { makeMsgLink } from "./telegram";
 import { Bot, CommandContext, Context } from "grammy";
 import { ipfsUploadFile } from "crossbell/ipfs";
@@ -79,7 +89,99 @@ export function getShareDetails(msg: Message) {
     return raw;
 }
 
+export async function getChannelBroadcastAuthorAccount(
+    channelId: string | number,
+    signature: string,
+    bot: Bot,
+    ctx: CommandContext<Context>,
+    nomland: Nomland
+) {
+    const admins = await bot.api.getChatAdministrators(channelId);
+
+    const author = getChannelBroadcastAuthor(admins, signature);
+    if (!author) return;
+    const authorAccount = await getChannelPosterAccount(
+        ctx,
+        author,
+        bot,
+        nomland
+    );
+    return authorAccount;
+}
+
+export function getChannelId(fwdMsg: Message) {
+    return fwdMsg.forward_from_chat?.id.toString().slice(4);
+}
+
+export function getChannelChatIdByChannelId(
+    channelId: string,
+    contextMap: Map<string, string>
+) {
+    const contextId = contextMap.get(channelId);
+    if (!contextId) return;
+    let channelChatId;
+    // iterate contextMap
+
+    for (const chatId of contextMap) {
+        console.log(chatId);
+        if (chatId[0] !== channelId && chatId[1] === contextId) {
+            channelChatId = chatId[0];
+            break;
+        }
+    }
+
+    return channelChatId;
+}
+
+// get forward message details without attachment
+export function getFwdMsgShareDetails(msg: Message) {
+    if (!msg.forward_from_chat) return null;
+
+    const text = getMsgText(msg);
+    if (!text) return null;
+
+    //TODO: icon_custom_emoji_id and icon_color
+    let communityName = "Telegram Community";
+    if ("title" in msg.forward_from_chat) {
+        communityName = msg.forward_from_chat.title;
+    }
+
+    const topicName =
+        msg.reply_to_message?.forum_topic_created?.name || "General";
+    // const msgLink = makeMsgLink(msg);
+    let msgLink = "";
+    const channelHandle = (msg.forward_from_chat as any).username;
+    const channelId = getChannelId(msg);
+
+    const msgId = getMessageIdFromFwd(msg);
+    if (msgId && channelHandle) {
+        msgLink = `https://t.me/${channelHandle}/${msgId}`;
+    } else if (msgId && channelId) {
+        msgLink = `https://t.me/c/${channelId}/${msgId}`;
+    }
+
+    // const contentAfterBot = text.split(botName)[1]; // TODO? remove it?
+    const tags = getTags(text).map((t) => t.slice(1));
+    const content = cleanContent(text);
+
+    const raw = {
+        content,
+        rawContent: msg.text,
+        tags,
+        sources: ["Telegram", communityName, topicName],
+        date_published: convertDate(msg.date),
+    } as NoteDetails;
+    if (msgLink) {
+        raw.external_url = msgLink;
+    }
+
+    return raw;
+}
+
 export function getMsgOrigin(msg: Message) {
+    if (msg.chat.id.toString() === settings.adminGroupId) {
+        return "admin";
+    }
     if (msg.chat.type === "private") {
         return "private";
     }
@@ -102,9 +204,13 @@ export function getSenderChatId(msg: Message) {
     return msg.sender_chat?.id.toString().slice(4);
 }
 
-export function getMessageId(msg: Message) {
+export function getMessageKey(msg: Message) {
     const msgId = getChatId(msg) + "-" + msg.message_id.toString();
     return msgId;
+}
+
+export function getMessageIdFromFwd(fwdMsg: Message): number | undefined {
+    return (fwdMsg as any).forward_origin?.message_id;
 }
 
 export function getEntities(msg: Message) {
@@ -161,9 +267,9 @@ export async function getChannelPosterAccount(
     ctx: CommandContext<Context>,
     author: TelegramUser,
     bot: Bot,
-    nomland: NomlandNode
+    nomland: Nomland
 ) {
-    if (!ctx.msg.from) return null;
+    if (!ctx.msg.from) return;
     const poster = makeAccount(author);
 
     const handle = formatHandle(poster);
@@ -200,12 +306,12 @@ export async function getChannelPosterAccount(
 }
 
 export async function getPosterAccount(
-    ctx: CommandContext<Context>,
+    user: User,
     bot: Bot,
-    nomland: NomlandNode
+    ctx: CommandContext<Context>,
+    nomland: Nomland
 ) {
-    if (!ctx.msg.from) return null;
-    const poster = makeAccount(ctx.msg.from);
+    const poster = makeAccount(user);
 
     const handle = formatHandle(poster);
 
@@ -308,4 +414,35 @@ export function getNoteKey(noteKeyString: string) {
         characterId,
         noteId,
     };
+}
+
+export function getMessageKeyFromLink(link: string) {
+    const parts = link.split("/");
+    const msgId = parts.pop();
+    const chatId = parts.pop();
+    return [chatId, msgId];
+}
+
+export function storeMsg(
+    idMap: Map<string, string>,
+    msgKey: string,
+    noteKey: NoteKey
+) {
+    const { characterId, noteId } = noteKey;
+    const postId = characterId.toString() + "-" + noteId.toString();
+
+    if (addKeyValue(msgKey, postId, settings.idMapTblName)) {
+        idMap.set(msgKey, postId);
+    }
+}
+
+function getChannelBroadcastAuthor(
+    channelAdmins: (ChatMemberOwner | ChatMemberAdministrator)[],
+    sig: string
+) {
+    return channelAdmins.find((admin) =>
+        admin.user.last_name
+            ? admin.user.first_name + " " + admin.user.last_name === sig
+            : admin.user.first_name === sig
+    )?.user;
 }

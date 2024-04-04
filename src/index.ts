@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { log } from "./utils/log";
-import Nomland, { TelegramGroup, TelegramUser, makeAccount } from "nomland.js";
+import Nomland, { Accountish, NoteDetails } from "nomland.js";
 
 import {
     getReplyToMsgId,
@@ -8,28 +8,27 @@ import {
     helpInfoInGroup,
     isAdmin,
     mentions,
-    makeMsgLink,
+    prepareFwdMessage,
 } from "./utils/telegram";
 import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./utils/constants";
 import {
-    getChannelPosterAccount,
     getContext,
     getFirstUrl,
-    getMessageId,
+    getMessageKey,
     getMsgOrigin,
     getMsgText,
     getNoteAttachments,
     getNoteKey,
     getPosterAccount,
+    getChannelBroadcastAuthorAccount,
+    storeMsg,
+    getMessageKeyFromLink,
 } from "./utils/common";
-import { settings } from "./config";
-import {
-    ChatMemberAdministrator,
-    ChatMemberOwner,
-    Message,
-} from "grammy/types";
+import { feedbackUrl, settings } from "./config";
+import { Message } from "grammy/types";
 import { addKeyValue, loadKeyValuePairs } from "./utils/keyValueStore";
+import { createShare } from "./utils/nomland";
 
 async function main() {
     try {
@@ -52,7 +51,7 @@ async function main() {
         loadKeyValuePairs(contextMap, settings.contextMapTblName);
 
         bot.command("help", async (ctx) => {
-            const inDM = ctx.msg.chat.type === "private";
+            const inDM = getMsgOrigin(ctx.msg) === "private";
             if (inDM) {
                 ctx.reply(helpMsg(botUsername, "dm"));
             } else {
@@ -83,35 +82,270 @@ async function main() {
             }
         });
 
-        // Share will be processed in the following cases:
-        // 1. It's a channel broadcast message and contains a URL.
-        // 2. It's not a channel message and it's a reply to a channel broadcast
-        //      2.1 The reply message contains URL: the URL will be processed as share.
-        // 3. It's not a channel message and it's not a reply to a channel broadcast
-        //      3.1 @Bot && URL: when a message contains both @Bot and URL, the URL will be processed as share, no matter if the message is a reply.
-        //      3.2 @Bot && !URL: when a message contains @Bot but no URL, the message will be processed as curation if the original message contains URL and !@Bot:
-        //          a. The author of the two messages are the same: the original message will be processed as curation. // TODO
-        //          b. The author of the two messages are different: the URL and the content of the reply message will be processed as curation, and the curator will be the author of the reply message.
-        //      3.3. @Bot && not covered by 1 and 2: /help
+        let shareParams: ShareParams | undefined;
+        interface ShareParams {
+            url: string;
+            details: NoteDetails;
+            authorAccount: Accountish;
+            contextId: string;
+            channelId: string;
+            broadcastId: string;
+            channelChatId: string;
+            chatMsgId: string | null;
+        }
+        type ManualShareCmdStatus =
+            | "START"
+            | "WAIT_MSG_ID"
+            | "WAIT_RPL_OPTION"
+            // | "RPL_OPTION_RECEIVED"
+            | "WAIT_EDIT_LINK";
+        // | "EDI_MSG_ID_RECEIVED";
+
+        let manualShareCmdStatus: ManualShareCmdStatus = "START";
 
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
+            if (getMsgOrigin(msg) === "admin") {
+                if (settings.adminCreateShareTopicId) {
+                    if (
+                        msg.reply_to_message?.message_id !==
+                        settings.adminCreateShareTopicId
+                    ) {
+                        return;
+                    }
+                }
+
+                const restart = () => {
+                    manualShareCmdStatus = "START";
+                    shareParams = undefined;
+                };
+
+                const reply = (text: string) => {
+                    if (settings.adminCreateShareTopicId) {
+                        ctx.reply(text, {
+                            reply_to_message_id:
+                                settings.adminCreateShareTopicId,
+                        });
+                    } else {
+                        ctx.reply(text);
+                    }
+                };
+
+                try {
+                    if (msg.text === "restart") {
+                        restart();
+                        reply("Restarted.");
+                    }
+                    if (manualShareCmdStatus === "START") {
+                        if (msg.forward_from_chat) {
+                            if (msg.forward_from_chat.type != "channel") {
+                                reply(
+                                    "Currently only support channel broadcast message."
+                                );
+                                return;
+                            }
+                            const result = await prepareFwdMessage(
+                                ctx,
+                                contextMap,
+                                bot,
+                                nomland
+                            );
+                            if (!result) return;
+                            shareParams = {
+                                chatMsgId: null,
+                                ...result,
+                            };
+                            reply(
+                                "Please continue to input the chat message link of this channel broadcast."
+                            );
+                            manualShareCmdStatus = "WAIT_MSG_ID";
+                        }
+                    } else if (manualShareCmdStatus === "WAIT_MSG_ID") {
+                        const msgLink = getFirstUrl(msg.text || "");
+                        if (!msgLink) {
+                            reply(
+                                "Please continue to input the chat message link of this channel broadcast."
+                            );
+                            return;
+                        }
+
+                        const [chatId, chatMsgId] =
+                            getMessageKeyFromLink(msgLink);
+                        if (!chatId || !chatMsgId) {
+                            reply(
+                                "Please input the correct message link of this channel broadcast."
+                            );
+                            return;
+                        }
+
+                        if (shareParams?.channelChatId !== chatId) {
+                            reply(
+                                "Message link mismatches. Please input the correct message link of this channel broadcast."
+                            );
+                            return;
+                        }
+                        const chatMsgKey =
+                            shareParams.channelChatId + "-" + chatMsgId;
+                        const noteKey = idMap.get(chatMsgKey);
+
+                        if (noteKey) {
+                            const url = feedbackUrl(getNoteKey(noteKey));
+                            reply(
+                                "This message has been processed. Link is " +
+                                    url
+                            );
+                            restart();
+
+                            return;
+                        }
+                        shareParams.chatMsgId = chatMsgId;
+
+                        manualShareCmdStatus = "WAIT_RPL_OPTION";
+                        reply(
+                            "Please continue to input the reply option of this message: 1. Reply to the message; 2. Edit the message."
+                        );
+                    } else if (manualShareCmdStatus === "WAIT_RPL_OPTION") {
+                        const option = msg.text;
+                        if (option === "1") {
+                            if (!shareParams) {
+                                reply("Internal Error. Please try again.");
+                                restart();
+
+                                return;
+                            }
+
+                            const shareNoteKey = await createShare(
+                                nomland,
+                                shareParams.url,
+                                shareParams.details,
+                                shareParams.authorAccount,
+                                shareParams.contextId,
+                                null, // TODO: manually set one?
+                                "elephant"
+                            );
+
+                            if (shareNoteKey) {
+                                storeMsg(
+                                    idMap,
+                                    shareParams.channelChatId +
+                                        "-" +
+                                        shareParams.chatMsgId,
+                                    shareNoteKey
+                                );
+                                ctx.api.sendMessage(
+                                    "-100" + shareParams.channelChatId,
+                                    settings.prompt.succeed(shareNoteKey),
+                                    {
+                                        reply_to_message_id: Number(
+                                            shareParams.chatMsgId
+                                        ),
+                                    }
+                                );
+                            } else {
+                                reply("Fail to process.");
+                            }
+
+                            manualShareCmdStatus = "START";
+                            shareParams = undefined;
+                        } else if (option === "2") {
+                            manualShareCmdStatus = "WAIT_EDIT_LINK";
+                            reply(
+                                "Please continue to input the link of the message that you want to edit."
+                            );
+                        } else {
+                            reply(
+                                "Please input the correct option: 1. Reply to the message; 2. Edit the message."
+                            );
+                        }
+                    } else if (manualShareCmdStatus === "WAIT_EDIT_LINK") {
+                        const msgLink = getFirstUrl(msg.text || "");
+                        if (!shareParams) {
+                            reply("Internal Error. Please try again.");
+                            restart();
+                            return;
+                        }
+
+                        if (!msgLink) {
+                            reply(
+                                "Please continue to input the link of the message that you want to edit."
+                            );
+                            return;
+                        }
+
+                        const [chatId, chatMsgId] =
+                            getMessageKeyFromLink(msgLink);
+
+                        if (!chatId || !chatMsgId) {
+                            reply(
+                                "Please input the correct link of the message you want to edit."
+                            );
+                            return;
+                        }
+
+                        if (shareParams.channelChatId !== chatId) {
+                            reply(
+                                "Chat Id mismatches. Please input the correct link of the message you want to edit."
+                            );
+                            return;
+                        }
+                        manualShareCmdStatus = "START";
+
+                        const shareNoteKey = await createShare(
+                            nomland,
+                            shareParams.url,
+                            shareParams.details,
+                            shareParams.authorAccount,
+                            shareParams.contextId,
+                            null, // TODO: manually set one?
+                            "elephant"
+                        );
+
+                        if (shareNoteKey) {
+                            storeMsg(
+                                idMap,
+                                shareParams.channelChatId +
+                                    "-" +
+                                    shareParams.chatMsgId,
+                                shareNoteKey
+                            );
+
+                            ctx.api.editMessageText(
+                                "-100" + chatId,
+                                Number(chatMsgId),
+                                settings.prompt.succeed(shareNoteKey)
+                            );
+                        } else {
+                            reply("Fail to process.");
+                        }
+                    }
+                } catch (e) {
+                    console.log("Something went wrong.");
+                    console.log(e);
+                }
+            }
+
             if (getMsgOrigin(msg) === "private") {
                 ctx.reply(helpMsg(botUsername, "dm"));
                 return;
             }
 
+            // Share will be processed in the following cases:
+            // 1. It's a channel broadcast message and contains a URL.
+            // 2. It's not a channel message and it's a reply to a channel broadcast
+            //      2.1 The reply message contains URL: the URL will be processed as share.
+            // 3. It's not a channel message and it's not a reply to a channel broadcast
+            //      3.1 @Bot && URL: when a message contains both @Bot and URL, the URL will be processed as share, no matter if the message is a reply.
+            //      3.2 @Bot && !URL: when a message contains @Bot but no URL, the message will be processed as curation if the original message contains URL and !@Bot:
+            //          a. The author of the two messages are the same: the original message will be processed as curation. // TODO
+            //          b. The author of the two messages are different: the URL and the content of the reply message will be processed as curation, and the curator will be the author of the reply message.
+            //      3.3. @Bot && not covered by 1 and 2: /help
             if (getMsgOrigin(msg) === "channel") {
-                const admins = await bot.api.getChatAdministrators(
-                    msg.sender_chat!.id
-                );
                 processShareInChannel(
                     ctx as any,
                     nomland,
                     bot,
                     idMap,
-                    contextMap,
-                    admins
+                    contextMap
                 );
             } else {
                 if (mentions(msg, botUsername)) {
@@ -164,6 +398,7 @@ async function processShareInGroup(
 ) {
     try {
         const msg = ctx.msg;
+        if (!msg.from) return;
 
         const msgText = getMsgText(msg);
         if (!msgText) return;
@@ -174,7 +409,7 @@ async function processShareInGroup(
 
         if (url) {
             // Scenario 1: the message itself is a share
-            const author = await getPosterAccount(ctx, bot, nomland);
+            const author = await getPosterAccount(msg.from, bot, ctx, nomland);
             if (author) {
                 processShareMsg(ctx, author, idMap, ctxMap, nomland, url, bot);
                 notRecognized = false;
@@ -188,8 +423,9 @@ async function processShareInGroup(
                     const replyToMsgUrl = getFirstUrl(replyToMsgText);
                     if (replyToMsgUrl) {
                         const author = await getPosterAccount(
-                            ctx,
+                            msg.from,
                             bot,
+                            ctx,
                             nomland
                         );
                         if (author) {
@@ -226,11 +462,13 @@ async function processShareInChannel(
     nomland: Nomland,
     bot: Bot,
     idMap: Map<string, string>,
-    ctxMap: Map<string, string>,
-    channelAdmins: (ChatMemberOwner | ChatMemberAdministrator)[]
+    ctxMap: Map<string, string>
 ) {
     try {
         const msg = ctx.msg;
+
+        if (!msg.forward_signature) return;
+        if (!msg.sender_chat?.id) return;
 
         const msgText = getMsgText(msg);
         if (!msgText) return;
@@ -240,22 +478,13 @@ async function processShareInChannel(
         // TODO: filter url
 
         if (url) {
-            const author = channelAdmins.find((admin) =>
-                admin.user.last_name
-                    ? admin.user.first_name + " " + admin.user.last_name
-                    : admin.user.first_name === msg.forward_signature
-            )?.user;
-            if (!author) {
-                log.warn("Author not found: ", msg);
-                return;
-            }
-            const authorAccount = await getChannelPosterAccount(
-                ctx,
-                author,
+            const authorAccount = await getChannelBroadcastAuthorAccount(
+                msg.sender_chat.id,
+                msg.forward_signature,
                 bot,
+                ctx,
                 nomland
             );
-            console.log("Author account: ", authorAccount);
             if (authorAccount) {
                 processShareMsg(
                     ctx,
@@ -281,6 +510,7 @@ async function processReply(
     ctxMap: Map<string, string>
 ) {
     const msg = ctx.msg;
+    if (!msg.from) return;
 
     const context = getContext(msg, ctxMap);
     if (!context) return;
@@ -292,9 +522,7 @@ async function processReply(
     const replyToPostId = getReplyToMsgId(msg, idMap);
     if (!replyToPostId) return;
 
-    console.log("Prepare to process reply...", replyToPostId);
-
-    const poster = await getPosterAccount(ctx, bot, nomland);
+    const poster = await getPosterAccount(msg.from, bot, ctx, nomland);
     if (!poster) return;
 
     const attachments = await getNoteAttachments(ctx, msg, bot.token);
@@ -309,12 +537,12 @@ async function processReply(
         getNoteKey(replyToPostId)
     );
 
-    const msgId = getMessageId(msg);
+    const msgKey = getMessageKey(msg);
 
     const postId = characterId.toString() + "-" + noteId.toString();
 
-    if (addKeyValue(msgId, postId, settings.idMapTblName)) {
-        idMap.set(msgId, postId);
+    if (addKeyValue(msgKey, postId, settings.idMapTblName)) {
+        idMap.set(msgKey, postId);
     }
 }
 

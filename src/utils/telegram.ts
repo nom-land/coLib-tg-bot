@@ -3,20 +3,27 @@ import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./constants";
 import { settings } from "../config";
 import {
+    getChannelBroadcastAuthorAccount,
+    getChannelChatIdByChannelId,
+    getChannelId,
     getChatId,
     getContext,
     getEntities,
-    getMessageId,
+    getFirstUrl,
+    getFwdMsgShareDetails,
+    getMessageIdFromFwd,
+    getMessageKey,
     getMsgOrigin,
     getMsgText,
     getNoteAttachments,
     getNoteKey,
     getSenderChatId,
     getShareDetails,
+    storeMsg,
 } from "./common";
-import { addKeyValue } from "./keyValueStore";
 import { createShare } from "./nomland";
 import NomlandNode, { Accountish } from "nomland.js";
+import { assert } from "console";
 export interface RawMessage {
     content: string;
     sources: string[];
@@ -77,6 +84,19 @@ export function makeMsgLink(msg: Message) {
         if (msgId && channelId) {
             return `https://t.me/c/${channelId}/${msgId}`;
         }
+    } else if (getMsgOrigin(msg) === "admin") {
+        if (msg.forward_from_chat) {
+            const channelHandle = (msg.forward_from_chat! as any).username;
+            const channelId = msg.forward_from_chat.id.toString().slice(4);
+
+            const msgId = (msg as any).forward_origin?.message_id.toString();
+            if (msgId && channelHandle) {
+                return `https://t.me/${channelHandle}/${msgId}`;
+            }
+            if (msgId && channelId) {
+                return `https://t.me/c/${channelId}/${msgId}`;
+            }
+        }
     }
     return null;
 }
@@ -115,9 +135,6 @@ export async function processShareMsg(
 
         if (!msg.from) return;
 
-        const text = getMsgText(msg);
-        if (!text) return null;
-
         const details = getShareDetails(msg);
         if (!details) return;
 
@@ -126,7 +143,7 @@ export async function processShareMsg(
         const replyToPostId = getReplyToMsgId(msg, idMap);
         const replyTo = replyToPostId ? getNoteKey(replyToPostId) : null;
 
-        const result = await createShare(
+        const shareNoteKey = await createShare(
             nom,
             url,
             details,
@@ -135,21 +152,14 @@ export async function processShareMsg(
             replyTo,
             "elephant"
         );
-        if (result) {
-            const { characterId, noteId } = result;
+        if (shareNoteKey) {
+            const msgKey = getMessageKey(msg);
 
-            const msgId = getMessageId(msg);
-
-            const postId = characterId.toString() + "-" + noteId.toString();
-
-            if (addKeyValue(msgId, postId, settings.idMapTblName)) {
-                idMap.set(msgId, postId);
-            }
-
+            storeMsg(idMap, msgKey, shareNoteKey);
             await ctx.api.editMessageText(
                 res.chat.id,
                 res.message_id,
-                settings.prompt.succeed(characterId, noteId)
+                settings.prompt.succeed(shareNoteKey)
             );
         } else {
             await ctx.api.editMessageText(
@@ -167,7 +177,7 @@ export function getReplyToMsgId(msg: Message, idMap: Map<string, string>) {
     const reply_to_message = msg.reply_to_message;
     if (!reply_to_message) return;
 
-    const replyToMsgId = getMessageId(reply_to_message);
+    const replyToMsgId = getMessageKey(reply_to_message);
 
     if (!replyToMsgId) return;
 
@@ -175,4 +185,75 @@ export function getReplyToMsgId(msg: Message, idMap: Map<string, string>) {
     if (!replyToPostId) return;
 
     return replyToPostId;
+}
+
+export async function prepareFwdMessage(
+    ctx: Context,
+    contextMap: Map<string, string>,
+    bot: Bot,
+    nomland: NomlandNode
+) {
+    const msg = ctx.msg!;
+    assert(msg.forward_from_chat);
+
+    const broadcastId = getMessageIdFromFwd(msg)?.toString();
+    if (!broadcastId) return;
+
+    const channelId = getChannelId(msg);
+    if (!channelId) return;
+
+    const contextId = contextMap.get(channelId);
+    if (!contextId) {
+        ctx.reply("I don't have permission to process this message.");
+        return;
+    }
+
+    const channelChatId = getChannelChatIdByChannelId(channelId, contextMap);
+
+    if (!channelChatId) {
+        ctx.reply("I don't have permission to process this message.");
+        return;
+    }
+
+    if (!msg.forward_signature) {
+        ctx.reply("Signature is not activated.");
+        return;
+    }
+
+    const msgText = getMsgText(msg);
+    if (!msgText) return;
+
+    const url = getFirstUrl(msgText);
+    if (!url) {
+        ctx.reply("Message has no url.");
+        return;
+    }
+
+    const authorAccount = await getChannelBroadcastAuthorAccount(
+        "-100" + channelId,
+        msg.forward_signature,
+        bot,
+        ctx as any,
+        nomland
+    );
+    if (!authorAccount) {
+        ctx.reply("Fail to get the author.");
+        return;
+    }
+
+    const details = getFwdMsgShareDetails(msg);
+    if (!details) {
+        ctx.reply("Fail to get the share details.");
+        return;
+    }
+
+    return {
+        url,
+        details,
+        authorAccount,
+        contextId,
+        channelId,
+        broadcastId,
+        channelChatId,
+    };
 }
