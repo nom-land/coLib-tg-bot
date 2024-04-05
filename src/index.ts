@@ -420,9 +420,14 @@ async function main() {
                                 reply("Invalid input.");
                                 return;
                             }
-                            const chatInfo = await bot.api.getChat(
-                                "-100" + channelId
-                            );
+
+                            const chat_id = isNaN(Number(channelId))
+                                ? channelId.startsWith("@")
+                                    ? channelId
+                                    : "@" + channelId
+                                : "-100" + channelId;
+
+                            const chatInfo = await bot.api.getChat(chat_id);
 
                             if ("linked_chat_id" in chatInfo) {
                                 const channelChatId = (
