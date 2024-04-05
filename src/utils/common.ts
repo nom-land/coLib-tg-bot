@@ -1,4 +1,6 @@
 import {
+    Chat,
+    ChatFromGetChat,
     ChatMemberAdministrator,
     ChatMemberOwner,
     Message,
@@ -135,6 +137,7 @@ export function getChannelChatIdByChannelId(
 // get forward message details without attachment
 export function getFwdMsgShareDetails(msg: Message) {
     if (!msg.forward_from_chat) return null;
+    if (!msg.forward_date) return null;
 
     const text = getMsgText(msg);
     if (!text) return null;
@@ -168,7 +171,7 @@ export function getFwdMsgShareDetails(msg: Message) {
         rawContent: msg.text,
         tags,
         sources: ["Telegram", communityName, topicName],
-        date_published: convertDate(msg.date),
+        date_published: convertDate(msg.forward_date),
     } as NoteDetails;
     if (msgLink) {
         raw.external_url = msgLink;
@@ -195,8 +198,12 @@ export function getMsgText(msg: Message) {
     return msg.text || msg.caption;
 }
 
-export function getChatId(msg: Message) {
-    return msg.chat.id.toString().slice(4);
+export function getChatId(msg: Message | Chat) {
+    if ("chat" in msg) {
+        return msg.chat.id.toString().slice(4);
+    } else {
+        return msg.id.toString().slice(4);
+    }
 }
 
 export function getSenderChatId(msg: Message) {
@@ -387,6 +394,23 @@ export async function getNoteAttachments(
         }
     }
     return attachments;
+}
+
+export function getContextFromChat(
+    chat: ChatFromGetChat,
+    ctxMap: Map<string, string>
+) {
+    const groupId = getChatId(chat);
+    if (ctxMap && ctxMap.has(groupId)) {
+        return Number(ctxMap.get(groupId)) || null;
+    }
+
+    return makeAccount({
+        id: chat.id,
+        type: chat.type,
+        title: (chat as any).title || "",
+        username: (chat as any).username || "",
+    });
 }
 
 export function getContext(

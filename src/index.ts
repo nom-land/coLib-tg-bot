@@ -24,9 +24,10 @@ import {
     getChannelBroadcastAuthorAccount,
     storeMsg,
     getKeyFromGroupMessageLink,
+    getContextFromChat,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
-import { Message } from "grammy/types";
+import { Message, User } from "grammy/types";
 import {
     setKeyValue,
     loadKeyValuePairs,
@@ -42,7 +43,6 @@ async function main() {
         await bot.init();
 
         const botUsername = bot.botInfo.username;
-
         console.log("Bot username: ", botUsername);
 
         const nomland = new Nomland(settings.appName, appKey);
@@ -91,7 +91,7 @@ async function main() {
             url: string;
             details: NoteDetails;
             authorAccount: Accountish;
-            contextId: string;
+            context: Accountish;
             channelId: string;
             broadcastId: string;
             channelChatId: string;
@@ -105,7 +105,25 @@ async function main() {
             | "WAIT_EDIT_LINK";
         // | "EDI_MSG_ID_RECEIVED";
 
+        let replyParams: ReplyParams | undefined;
+
+        interface ReplyParams {
+            userType: "hidden_user" | "user";
+            user: User | null;
+            authorId: string | null;
+            details: NoteDetails;
+            chatId: string | null;
+            replyMsgId: string | null;
+            originalMsgId: string | null;
+        }
+        type ManualReplyCmdStatus =
+            | "START"
+            | "WAIT_AUTHOR_ID"
+            | "WAIT_MSG_ID"
+            | "WAIT_RPL_MSG_ID";
+
         let manualShareCmdStatus: ManualShareCmdStatus = "START";
+        let manualReplyCmdStatus: ManualReplyCmdStatus = "START";
 
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
@@ -236,7 +254,7 @@ async function main() {
                                         shareParams.url,
                                         shareParams.details,
                                         shareParams.authorAccount,
-                                        shareParams.contextId,
+                                        shareParams.context,
                                         null, // TODO: manually set one?
                                         "elephant"
                                     );
@@ -321,7 +339,7 @@ async function main() {
                                     shareParams.url,
                                     shareParams.details,
                                     shareParams.authorAccount,
-                                    shareParams.contextId,
+                                    shareParams.context,
                                     null, // TODO: manually set one?
                                     "elephant"
                                 );
@@ -432,6 +450,272 @@ async function main() {
                                 contextId,
                                 settings.contextMapTblName
                             );
+                        }
+                    }
+                }
+                if (settings.adminCreateReplyTopicId) {
+                    if (
+                        msg.reply_to_message?.message_id ===
+                        settings.adminCreateReplyTopicId
+                    ) {
+                        const reply = (text: string) => {
+                            if (settings.adminCreateReplyTopicId) {
+                                ctx.reply(text, {
+                                    reply_to_message_id:
+                                        settings.adminCreateReplyTopicId,
+                                });
+                            } else {
+                                ctx.reply(text);
+                            }
+                        };
+
+                        if (manualReplyCmdStatus === "START") {
+                            const fwdOrigin = (ctx.msg as any).forward_origin;
+
+                            const msgText = getMsgText(msg) || "";
+                            if (!msg.forward_date) return;
+
+                            if (
+                                (fwdOrigin &&
+                                    fwdOrigin.type === "hidden_user") ||
+                                (fwdOrigin && fwdOrigin.type === "user")
+                            ) {
+                                const attachments = await getNoteAttachments(
+                                    ctx as any,
+                                    msg,
+                                    bot.token
+                                );
+
+                                const date_published = new Date(
+                                    msg.forward_date
+                                ).toISOString();
+
+                                if (
+                                    fwdOrigin &&
+                                    fwdOrigin.type === "hidden_user"
+                                ) {
+                                    replyParams = {
+                                        userType: "hidden_user",
+                                        user: null,
+                                        authorId: null,
+                                        details: {
+                                            content: msgText,
+                                            attachments,
+                                            date_published,
+                                        },
+                                        replyMsgId: null,
+                                        chatId: null,
+                                        originalMsgId: null,
+                                    };
+                                    manualReplyCmdStatus = "WAIT_AUTHOR_ID";
+                                    reply(
+                                        "This is a hidden user. Please continue to input the author id."
+                                    );
+                                } else if (
+                                    fwdOrigin &&
+                                    fwdOrigin.type === "user"
+                                ) {
+                                    const user = fwdOrigin.sender_user;
+                                    replyParams = {
+                                        userType: "user",
+                                        user: user,
+                                        authorId: null,
+                                        details: {
+                                            content: msgText,
+                                            attachments,
+                                            date_published,
+                                        },
+                                        replyMsgId: null,
+                                        chatId: null,
+                                        originalMsgId: null,
+                                    };
+                                    manualReplyCmdStatus = "WAIT_RPL_MSG_ID";
+                                    reply(
+                                        "Please continue to input the link of this reply message."
+                                    );
+                                }
+                            }
+                        } else if (manualReplyCmdStatus === "WAIT_AUTHOR_ID") {
+                            if (!replyParams) {
+                                reply("Internal Error. Please try again.");
+                                manualReplyCmdStatus = "START";
+                                return;
+                            }
+                            if (msg.text) {
+                                const authorId = msg.text;
+                                const author =
+                                    await nomland.contract.character.get({
+                                        characterId: authorId,
+                                    });
+                                if (!author) {
+                                    reply(
+                                        "Author not found. Please input the correct author id."
+                                    );
+                                    return;
+                                } else {
+                                    replyParams.authorId = authorId;
+                                    reply(
+                                        "Please continue to input the link of this reply message."
+                                    );
+                                    manualReplyCmdStatus = "WAIT_RPL_MSG_ID";
+                                }
+                            } else {
+                                reply("Please input the correct username.");
+                            }
+                        } else if (manualReplyCmdStatus === "WAIT_RPL_MSG_ID") {
+                            if (!replyParams) {
+                                reply("Internal Error. Please try again.");
+                                manualReplyCmdStatus = "START";
+                                return;
+                            }
+                            const msgLink = getFirstUrl(msg.text || "");
+                            if (!msgLink) {
+                                reply(
+                                    "Please continue to input the link of this reply message."
+                                );
+                                return;
+                            }
+
+                            const [chatId, chatMsgId] =
+                                await getKeyFromGroupMessageLink(
+                                    msgLink,
+                                    bot,
+                                    reply
+                                );
+                            if (!chatId || !chatMsgId) {
+                                reply(
+                                    "Please input the correct link of this reply message."
+                                );
+                                return;
+                            }
+
+                            const noteKeyString = idMap.get(
+                                chatId + "-" + chatMsgId
+                            );
+                            if (noteKeyString) {
+                                reply(
+                                    "The message has been processed. CharacterId: " +
+                                        idMap.get(chatId + "-" + chatMsgId)
+                                );
+                                manualReplyCmdStatus = "START";
+                                return;
+                            }
+
+                            replyParams.chatId = chatId;
+                            replyParams.replyMsgId = chatMsgId;
+
+                            reply(
+                                "Please input the message link that you want to reply."
+                            );
+                            manualReplyCmdStatus = "WAIT_MSG_ID";
+                        } else if (manualReplyCmdStatus === "WAIT_MSG_ID") {
+                            if (!replyParams) {
+                                reply("Internal Error. Please try again.");
+                                manualReplyCmdStatus = "START";
+                                return;
+                            }
+                            const msgLink = getFirstUrl(msg.text || "");
+                            if (!msgLink) {
+                                reply(
+                                    "Please continue to input the link of the message that you want to reply."
+                                );
+                                return;
+                            }
+
+                            const [chatId, chatMsgId] =
+                                await getKeyFromGroupMessageLink(
+                                    msgLink,
+                                    bot,
+                                    reply
+                                );
+                            if (!chatId || !chatMsgId) {
+                                reply(
+                                    "Please input the correct link of the message you want to reply."
+                                );
+                                return;
+                            }
+                            if (chatId !== replyParams.chatId) {
+                                reply(
+                                    "Chat Id mismatches. Please input the correct link of the message you want to reply."
+                                );
+                                return;
+                            }
+
+                            replyParams.originalMsgId = chatMsgId;
+                            const noteKeyString = idMap.get(
+                                chatId + "-" + chatMsgId
+                            );
+                            if (!noteKeyString) {
+                                reply(
+                                    "The message you want to reply has not been processed."
+                                );
+                                manualReplyCmdStatus = "START";
+                                return;
+                            }
+                            const replyToNoteKey = getNoteKey(noteKeyString);
+
+                            let poster: Accountish;
+                            if (
+                                replyParams.userType === "user" &&
+                                replyParams.user
+                            ) {
+                                poster = await getPosterAccount(
+                                    replyParams.user,
+                                    bot,
+                                    ctx as any,
+                                    nomland
+                                );
+                            } else if (
+                                replyParams.userType === "hidden_user" &&
+                                replyParams.authorId
+                            ) {
+                                poster = replyParams.authorId;
+                            } else {
+                                console.log(replyParams);
+                                reply("Internal Error. Please try again.");
+                                manualReplyCmdStatus = "START";
+                                return;
+                            }
+
+                            const chatInfo = await bot.api.getChat(
+                                "-100" + chatId
+                            );
+                            const contextId = getContextFromChat(
+                                chatInfo,
+                                contextMap
+                            );
+                            if (!contextId) {
+                                reply("Fail to get the context id.");
+                                manualReplyCmdStatus = "START";
+                                return;
+                            }
+                            console.log(contextId);
+
+                            const replyNoteKey = await nomland.createReply(
+                                poster,
+                                contextId,
+                                replyParams.details,
+                                replyToNoteKey
+                            );
+
+                            if (replyNoteKey) {
+                                storeMsg(
+                                    idMap,
+                                    chatId + "-" + chatMsgId,
+                                    replyNoteKey
+                                );
+                                reply(
+                                    "Succeed. CharacterId: " +
+                                        replyNoteKey.characterId +
+                                        ", NoteId: " +
+                                        replyNoteKey.noteId
+                                );
+                            } else {
+                                reply("Fail to process.");
+                            }
+
+                            manualReplyCmdStatus = "START";
+                            replyParams = undefined;
                         }
                     }
                 }
@@ -639,8 +923,7 @@ async function processReply(
     const context = getContext(msg, ctxMap);
     if (!context) return;
 
-    const msgText = getMsgText(msg);
-    if (!msgText) return;
+    const msgText = getMsgText(msg) || "";
 
     // if the original msg is a share, then the reply msg will be processed as reply
     const replyToPostId = getReplyToMsgId(msg, idMap);

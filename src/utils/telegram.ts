@@ -8,6 +8,7 @@ import {
     getChannelId,
     getChatId,
     getContext,
+    getContextFromChat,
     getEntities,
     getFirstUrl,
     getFwdMsgShareDetails,
@@ -22,7 +23,7 @@ import {
     storeMsg,
 } from "./common";
 import { createShare } from "./nomland";
-import NomlandNode, { Accountish } from "nomland.js";
+import NomlandNode, { Accountish, makeAccount } from "nomland.js";
 import { assert } from "console";
 export interface RawMessage {
     content: string;
@@ -215,19 +216,23 @@ export async function prepareFwdMessage(
     const channelId = getChannelId(msg);
     if (!channelId) return;
 
-    const contextId = contextMap.get(channelId);
-    if (!contextId) {
+    let channelChatId: string;
+
+    const channelInfo = await bot.api.getChat("-100" + channelId);
+    if ("linked_chat_id" in channelInfo) {
+        channelChatId = (channelInfo as any).linked_chat_id.toString().slice(4);
+    } else {
         reply(
-            "This channel has not been bound with context id. I don't have permission to process this message."
+            "This channel has not been bound with a chat. I don't have permission to process this message."
         );
         return;
     }
 
-    const channelChatId = getChannelChatIdByChannelId(channelId, contextMap);
-    if (!channelChatId) {
-        reply(
-            "This channel has not been bound with a chat. I don't have permission to process this message."
-        );
+    const chatInfo = await bot.api.getChat("-100" + channelChatId);
+    const context = getContextFromChat(chatInfo, contextMap);
+
+    if (!context) {
+        reply("Fail to get context");
         return;
     }
 
@@ -256,18 +261,19 @@ export async function prepareFwdMessage(
         reply("Fail to get the author.");
         return;
     }
-
+    const msgAttachments = await getNoteAttachments(ctx as any, msg, bot.token);
     const details = getFwdMsgShareDetails(msg);
     if (!details) {
         reply("Fail to get the share details.");
         return;
     }
+    details.attachments = msgAttachments;
 
     return {
         url,
         details,
         authorAccount,
-        contextId,
+        context,
         channelId,
         broadcastId,
         channelChatId,
