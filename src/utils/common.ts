@@ -13,7 +13,7 @@ import Nomland, {
     NoteDetails,
     NoteKey,
 } from "nomland.js";
-import { addKeyValue } from "./keyValueStore";
+import { setKeyValue } from "./keyValueStore";
 import { settings } from "../config";
 
 import { makeMsgLink } from "./telegram";
@@ -453,7 +453,7 @@ export function storeMsg(
     const { characterId, noteId } = noteKey;
     const postId = characterId.toString() + "-" + noteId.toString();
 
-    if (addKeyValue(msgKey, postId, settings.idMapTblName)) {
+    if (setKeyValue(msgKey, postId, settings.idMapTblName)) {
         idMap.set(msgKey, postId);
     }
 }

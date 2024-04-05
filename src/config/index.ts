@@ -2,6 +2,7 @@ import { NoteKey } from "nomland.js";
 
 export const settings = {
     adminGroupId: process.env.ADMIN_GROUP_ID || "",
+    adminBindContextTopicId: Number(process.env.ADMIN_BIND_CONTEXT_TOPIC),
     adminCreateShareTopicId: Number(process.env.ADMIN_CREATE_SHARE_TOPIC),
     appName: "nunti", //will be used in the "sources" of metadata
     idMapTblName: "nunti-idMap",

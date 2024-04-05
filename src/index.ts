@@ -27,7 +27,11 @@ import {
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import { Message } from "grammy/types";
-import { addKeyValue, loadKeyValuePairs } from "./utils/keyValueStore";
+import {
+    setKeyValue,
+    loadKeyValuePairs,
+    removeKeyValue,
+} from "./utils/keyValueStore";
 import { createShare } from "./utils/nomland";
 
 async function main() {
@@ -108,238 +112,328 @@ async function main() {
             if (getMsgOrigin(msg) === "admin") {
                 if (settings.adminCreateShareTopicId) {
                     if (
-                        msg.reply_to_message?.message_id !==
+                        msg.reply_to_message?.message_id ===
                         settings.adminCreateShareTopicId
                     ) {
-                        return;
-                    }
-                }
-
-                const restart = () => {
-                    manualShareCmdStatus = "START";
-                    shareParams = undefined;
-                };
-
-                const reply = (text: string) => {
-                    if (settings.adminCreateShareTopicId) {
-                        ctx.reply(text, {
-                            reply_to_message_id:
-                                settings.adminCreateShareTopicId,
-                        });
-                    } else {
-                        ctx.reply(text);
-                    }
-                };
-
-                try {
-                    if (msg.text === "restart") {
-                        restart();
-                        reply("Restarted.");
-                    }
-                    if (manualShareCmdStatus === "START") {
-                        if (msg.forward_from_chat) {
-                            if (msg.forward_from_chat.type != "channel") {
-                                reply(
-                                    "Currently only support channel broadcast message."
-                                );
-                                return;
-                            }
-                            const result = await prepareFwdMessage(
-                                ctx,
-                                contextMap,
-                                bot,
-                                nomland,
-                                reply
-                            );
-                            if (!result) return;
-                            shareParams = {
-                                chatMsgId: null,
-                                ...result,
-                            };
-                            reply(
-                                "Please continue to input the chat message link of this channel broadcast."
-                            );
-                            manualShareCmdStatus = "WAIT_MSG_ID";
-                        }
-                    } else if (manualShareCmdStatus === "WAIT_MSG_ID") {
-                        const msgLink = getFirstUrl(msg.text || "");
-                        if (!msgLink) {
-                            reply(
-                                "Please continue to input the chat message link of this channel broadcast."
-                            );
-                            return;
-                        }
-
-                        const [chatId, chatMsgId] =
-                            await getKeyFromGroupMessageLink(
-                                msgLink,
-                                bot,
-                                reply
-                            );
-                        if (!chatId || !chatMsgId) {
-                            reply(
-                                "Please input the correct chat message link of this channel broadcast."
-                            );
-                            return;
-                        }
-
-                        if (shareParams?.channelChatId !== chatId) {
-                            reply(
-                                "Message link mismatches: Expected: " +
-                                    shareParams?.channelChatId +
-                                    ", but got: " +
-                                    chatId +
-                                    ". Please input the correct message link of this channel broadcast."
-                            );
-                            return;
-                        }
-                        const chatMsgKey =
-                            shareParams.channelChatId + "-" + chatMsgId;
-                        const noteKey = idMap.get(chatMsgKey);
-
-                        if (noteKey) {
-                            const url = feedbackUrl(getNoteKey(noteKey));
-                            reply(
-                                "This message has been processed. Link is " +
-                                    url
-                            );
-                            restart();
-
-                            return;
-                        }
-                        shareParams.chatMsgId = chatMsgId;
-
-                        manualShareCmdStatus = "WAIT_RPL_OPTION";
-                        reply(
-                            "Please continue to input the reply option of this message: 1. Reply to the message; 2. Edit the message."
-                        );
-                    } else if (manualShareCmdStatus === "WAIT_RPL_OPTION") {
-                        const option = msg.text;
-                        if (option === "1") {
-                            if (!shareParams) {
-                                reply("Internal Error. Please try again.");
-                                restart();
-
-                                return;
-                            }
-
-                            const shareNoteKey = await createShare(
-                                nomland,
-                                shareParams.url,
-                                shareParams.details,
-                                shareParams.authorAccount,
-                                shareParams.contextId,
-                                null, // TODO: manually set one?
-                                "elephant"
-                            );
-
-                            if (shareNoteKey) {
-                                storeMsg(
-                                    idMap,
-                                    shareParams.channelChatId +
-                                        "-" +
-                                        shareParams.chatMsgId,
-                                    shareNoteKey
-                                );
-                                ctx.api.sendMessage(
-                                    "-100" + shareParams.channelChatId,
-                                    settings.prompt.channelSucceed(
-                                        shareNoteKey
-                                    ),
-                                    {
-                                        reply_to_message_id: Number(
-                                            shareParams.chatMsgId
-                                        ),
-                                        parse_mode: "HTML",
-                                    }
-                                );
-                            } else {
-                                reply("Fail to process.");
-                            }
-
+                        const restart = () => {
                             manualShareCmdStatus = "START";
                             shareParams = undefined;
-                        } else if (option === "2") {
-                            manualShareCmdStatus = "WAIT_EDIT_LINK";
-                            reply(
-                                "Please continue to input the link of the message that you want to edit."
-                            );
-                        } else {
-                            reply(
-                                "Please input the correct option: 1. Reply to the message; 2. Edit the message."
-                            );
-                        }
-                    } else if (manualShareCmdStatus === "WAIT_EDIT_LINK") {
-                        const msgLink = getFirstUrl(msg.text || "");
-                        if (!shareParams) {
-                            reply("Internal Error. Please try again.");
-                            restart();
-                            return;
-                        }
+                        };
 
-                        if (!msgLink) {
-                            reply(
-                                "Please continue to input the link of the message that you want to edit."
-                            );
-                            return;
-                        }
+                        const reply = (text: string) => {
+                            if (settings.adminCreateShareTopicId) {
+                                ctx.reply(text, {
+                                    reply_to_message_id:
+                                        settings.adminCreateShareTopicId,
+                                });
+                            } else {
+                                ctx.reply(text);
+                            }
+                        };
 
-                        const [chatId, chatMsgId] =
-                            await getKeyFromGroupMessageLink(
-                                msgLink,
-                                bot,
-                                reply
-                            );
-
-                        if (!chatId || !chatMsgId) {
-                            reply(
-                                "Please input the correct link of the message you want to edit."
-                            );
-                            return;
-                        }
-
-                        if (shareParams.channelChatId !== chatId) {
-                            reply(
-                                "Chat Id mismatches. Please input the correct link of the message you want to edit."
-                            );
-                            return;
-                        }
-                        manualShareCmdStatus = "START";
-
-                        const shareNoteKey = await createShare(
-                            nomland,
-                            shareParams.url,
-                            shareParams.details,
-                            shareParams.authorAccount,
-                            shareParams.contextId,
-                            null, // TODO: manually set one?
-                            "elephant"
-                        );
-
-                        if (shareNoteKey) {
-                            storeMsg(
-                                idMap,
-                                shareParams.channelChatId +
-                                    "-" +
-                                    shareParams.chatMsgId,
-                                shareNoteKey
-                            );
-
-                            ctx.api.editMessageText(
-                                "-100" + chatId,
-                                Number(chatMsgId),
-                                settings.prompt.channelSucceed(shareNoteKey),
-                                {
-                                    parse_mode: "HTML",
+                        try {
+                            if (msg.text === "restart") {
+                                restart();
+                                reply("Restarted.");
+                            }
+                            if (manualShareCmdStatus === "START") {
+                                if (msg.forward_from_chat) {
+                                    if (
+                                        msg.forward_from_chat.type != "channel"
+                                    ) {
+                                        reply(
+                                            "Currently only support channel broadcast message."
+                                        );
+                                        return;
+                                    }
+                                    const result = await prepareFwdMessage(
+                                        ctx,
+                                        contextMap,
+                                        bot,
+                                        nomland,
+                                        reply
+                                    );
+                                    if (!result) return;
+                                    shareParams = {
+                                        chatMsgId: null,
+                                        ...result,
+                                    };
+                                    reply(
+                                        "Please continue to input the chat message link of this channel broadcast."
+                                    );
+                                    manualShareCmdStatus = "WAIT_MSG_ID";
                                 }
-                            );
-                        } else {
-                            reply("Fail to process.");
+                            } else if (manualShareCmdStatus === "WAIT_MSG_ID") {
+                                const msgLink = getFirstUrl(msg.text || "");
+                                if (!msgLink) {
+                                    reply(
+                                        "Please continue to input the chat message link of this channel broadcast."
+                                    );
+                                    return;
+                                }
+
+                                const [chatId, chatMsgId] =
+                                    await getKeyFromGroupMessageLink(
+                                        msgLink,
+                                        bot,
+                                        reply
+                                    );
+                                if (!chatId || !chatMsgId) {
+                                    reply(
+                                        "Please input the correct chat message link of this channel broadcast."
+                                    );
+                                    return;
+                                }
+
+                                if (shareParams?.channelChatId !== chatId) {
+                                    reply(
+                                        "Message link mismatches: Expected: " +
+                                            shareParams?.channelChatId +
+                                            ", but got: " +
+                                            chatId +
+                                            ". Please input the correct message link of this channel broadcast."
+                                    );
+                                    return;
+                                }
+                                const chatMsgKey =
+                                    shareParams.channelChatId + "-" + chatMsgId;
+                                const noteKey = idMap.get(chatMsgKey);
+
+                                if (noteKey) {
+                                    const url = feedbackUrl(
+                                        getNoteKey(noteKey)
+                                    );
+                                    reply(
+                                        "This message has been processed. Link is " +
+                                            url
+                                    );
+                                    restart();
+
+                                    return;
+                                }
+                                shareParams.chatMsgId = chatMsgId;
+
+                                manualShareCmdStatus = "WAIT_RPL_OPTION";
+                                reply(
+                                    "Please continue to input the reply option of this message: 1. Reply to the message; 2. Edit the message."
+                                );
+                            } else if (
+                                manualShareCmdStatus === "WAIT_RPL_OPTION"
+                            ) {
+                                const option = msg.text;
+                                if (option === "1") {
+                                    if (!shareParams) {
+                                        reply(
+                                            "Internal Error. Please try again."
+                                        );
+                                        restart();
+
+                                        return;
+                                    }
+
+                                    const shareNoteKey = await createShare(
+                                        nomland,
+                                        shareParams.url,
+                                        shareParams.details,
+                                        shareParams.authorAccount,
+                                        shareParams.contextId,
+                                        null, // TODO: manually set one?
+                                        "elephant"
+                                    );
+
+                                    if (shareNoteKey) {
+                                        storeMsg(
+                                            idMap,
+                                            shareParams.channelChatId +
+                                                "-" +
+                                                shareParams.chatMsgId,
+                                            shareNoteKey
+                                        );
+                                        ctx.api.sendMessage(
+                                            "-100" + shareParams.channelChatId,
+                                            settings.prompt.channelSucceed(
+                                                shareNoteKey
+                                            ),
+                                            {
+                                                reply_to_message_id: Number(
+                                                    shareParams.chatMsgId
+                                                ),
+                                                parse_mode: "HTML",
+                                            }
+                                        );
+                                    } else {
+                                        reply("Fail to process.");
+                                    }
+
+                                    manualShareCmdStatus = "START";
+                                    shareParams = undefined;
+                                } else if (option === "2") {
+                                    manualShareCmdStatus = "WAIT_EDIT_LINK";
+                                    reply(
+                                        "Please continue to input the link of the message that you want to edit."
+                                    );
+                                } else {
+                                    reply(
+                                        "Please input the correct option: 1. Reply to the message; 2. Edit the message."
+                                    );
+                                }
+                            } else if (
+                                manualShareCmdStatus === "WAIT_EDIT_LINK"
+                            ) {
+                                const msgLink = getFirstUrl(msg.text || "");
+                                if (!shareParams) {
+                                    reply("Internal Error. Please try again.");
+                                    restart();
+                                    return;
+                                }
+
+                                if (!msgLink) {
+                                    reply(
+                                        "Please continue to input the link of the message that you want to edit."
+                                    );
+                                    return;
+                                }
+
+                                const [chatId, chatMsgId] =
+                                    await getKeyFromGroupMessageLink(
+                                        msgLink,
+                                        bot,
+                                        reply
+                                    );
+
+                                if (!chatId || !chatMsgId) {
+                                    reply(
+                                        "Please input the correct link of the message you want to edit."
+                                    );
+                                    return;
+                                }
+
+                                if (shareParams.channelChatId !== chatId) {
+                                    reply(
+                                        "Chat Id mismatches. Please input the correct link of the message you want to edit."
+                                    );
+                                    return;
+                                }
+                                manualShareCmdStatus = "START";
+
+                                const shareNoteKey = await createShare(
+                                    nomland,
+                                    shareParams.url,
+                                    shareParams.details,
+                                    shareParams.authorAccount,
+                                    shareParams.contextId,
+                                    null, // TODO: manually set one?
+                                    "elephant"
+                                );
+
+                                if (shareNoteKey) {
+                                    storeMsg(
+                                        idMap,
+                                        shareParams.channelChatId +
+                                            "-" +
+                                            shareParams.chatMsgId,
+                                        shareNoteKey
+                                    );
+
+                                    ctx.api.editMessageText(
+                                        "-100" + chatId,
+                                        Number(chatMsgId),
+                                        settings.prompt.channelSucceed(
+                                            shareNoteKey
+                                        ),
+                                        {
+                                            parse_mode: "HTML",
+                                        }
+                                    );
+                                } else {
+                                    reply("Fail to process.");
+                                }
+                            }
+                        } catch (e) {
+                            console.log("Something went wrong.");
+                            console.log(e);
                         }
                     }
-                } catch (e) {
-                    console.log("Something went wrong.");
-                    console.log(e);
+                }
+                if (settings.adminBindContextTopicId) {
+                    const reply = (text: string) => {
+                        if (settings.adminBindContextTopicId) {
+                            ctx.reply(text, {
+                                reply_to_message_id:
+                                    settings.adminBindContextTopicId,
+                            });
+                        } else {
+                            ctx.reply(text);
+                        }
+                    };
+
+                    if (
+                        msg.reply_to_message?.message_id ===
+                        settings.adminBindContextTopicId
+                    ) {
+                        const msgText = getMsgText(msg);
+                        if (!msgText) return;
+
+                        console.log(contextMap);
+                        if (msgText.startsWith("/ls")) {
+                            let text = "";
+                            for (const [k, v] of contextMap) {
+                                if (k.startsWith("//")) {
+                                    text += k.slice(3) + ": " + v + "\n";
+                                }
+                            }
+                            reply(text);
+                        } else if (msgText.startsWith("/remove")) {
+                            const contextId = msgText.split(" ")[1];
+                            console.log(contextId);
+                            for (const [k, v] of contextMap) {
+                                if (v === contextId) {
+                                    removeKeyValue(
+                                        k,
+                                        settings.contextMapTblName
+                                    );
+                                }
+                            }
+                        } else if (msgText.startsWith("/setcontext")) {
+                            const channelId = msgText.split(" ")[1];
+                            const channelChatId = msgText.split(" ")[2];
+                            const contextId = msgText.split(" ")[3];
+                            const idDesc = msgText.split(" ")[4];
+                            if (
+                                !channelId ||
+                                !channelChatId ||
+                                !contextId ||
+                                !idDesc
+                            ) {
+                                reply("Invalid input.");
+                                return;
+                            }
+                            setKeyValue(
+                                channelId,
+                                contextId,
+                                settings.contextMapTblName
+                            );
+                            setKeyValue(
+                                channelChatId,
+                                contextId,
+                                settings.contextMapTblName
+                            );
+                            setKeyValue(
+                                "// " +
+                                    channelChatId +
+                                    " " +
+                                    idDesc +
+                                    " Chat Group",
+                                contextId,
+                                settings.contextMapTblName
+                            );
+                            setKeyValue(
+                                "// " + channelId + " " + idDesc + " Channel",
+                                contextId,
+                                settings.contextMapTblName
+                            );
+                        }
+                    }
                 }
             }
 
@@ -571,7 +665,7 @@ async function processReply(
 
     const postId = characterId.toString() + "-" + noteId.toString();
 
-    if (addKeyValue(msgKey, postId, settings.idMapTblName)) {
+    if (setKeyValue(msgKey, postId, settings.idMapTblName)) {
         idMap.set(msgKey, postId);
     }
 }

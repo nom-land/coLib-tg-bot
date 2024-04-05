@@ -14,7 +14,7 @@ const getFilePath = (table?: string) => {
     return path.join(rootPath, fileName);
 };
 
-export function addKeyValue(
+export function setKeyValue(
     key: string,
     value: string,
     table?: string
@@ -37,6 +37,35 @@ export function addKeyValue(
         fs.writeFileSync(filePath, JSON.stringify(store, null, 2));
 
         return true;
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+}
+
+export function removeKeyValue(key: string, table?: string): boolean {
+    const filePath = getFilePath(table);
+
+    try {
+        if (!fs.existsSync(filePath)) {
+            console.error("No file path found.");
+            return false;
+        }
+
+        const data = fs.readFileSync(filePath, "utf-8");
+        let store: Record<string, string> = {};
+
+        if (data) {
+            store = JSON.parse(data);
+        }
+
+        if (store[key]) {
+            delete store[key];
+            fs.writeFileSync(filePath, JSON.stringify(store, null, 2));
+            return true;
+        }
+
+        return false;
     } catch (err) {
         console.error(err);
         return false;
