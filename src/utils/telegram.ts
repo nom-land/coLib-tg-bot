@@ -203,7 +203,8 @@ export async function prepareFwdMessage(
     ctx: Context,
     contextMap: Map<string, string>,
     bot: Bot,
-    nomland: NomlandNode
+    nomland: NomlandNode,
+    reply: (text: string) => void
 ) {
     const msg = ctx.msg!;
     assert(msg.forward_from_chat);
@@ -216,19 +217,22 @@ export async function prepareFwdMessage(
 
     const contextId = contextMap.get(channelId);
     if (!contextId) {
-        ctx.reply("I don't have permission to process this message.");
+        reply(
+            "This channel has not been bound with context id. I don't have permission to process this message."
+        );
         return;
     }
 
     const channelChatId = getChannelChatIdByChannelId(channelId, contextMap);
-
     if (!channelChatId) {
-        ctx.reply("I don't have permission to process this message.");
+        reply(
+            "This channel has not been bound with a chat. I don't have permission to process this message."
+        );
         return;
     }
 
     if (!msg.forward_signature) {
-        ctx.reply("Signature is not activated.");
+        reply("Signature is not activated.");
         return;
     }
 
@@ -237,7 +241,7 @@ export async function prepareFwdMessage(
 
     const url = getFirstUrl(msgText);
     if (!url) {
-        ctx.reply("Message has no url.");
+        reply("Message has no url.");
         return;
     }
 
@@ -249,13 +253,13 @@ export async function prepareFwdMessage(
         nomland
     );
     if (!authorAccount) {
-        ctx.reply("Fail to get the author.");
+        reply("Fail to get the author.");
         return;
     }
 
     const details = getFwdMsgShareDetails(msg);
     if (!details) {
-        ctx.reply("Fail to get the share details.");
+        reply("Fail to get the share details.");
         return;
     }
 

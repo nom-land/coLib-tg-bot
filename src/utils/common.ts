@@ -120,7 +120,6 @@ export function getChannelChatIdByChannelId(
     const contextId = contextMap.get(channelId);
     if (!contextId) return;
     let channelChatId;
-    // iterate contextMap
 
     for (const chatId of contextMap) {
         console.log(chatId);
@@ -416,11 +415,34 @@ export function getNoteKey(noteKeyString: string) {
     };
 }
 
-export function getMessageKeyFromLink(link: string) {
+export function decomposeMsgLink(link: string) {
     const parts = link.split("/");
     const msgId = parts.pop();
     const chatId = parts.pop();
     return [chatId, msgId];
+}
+
+export async function getKeyFromGroupMessageLink(
+    link: string,
+    bot: Bot,
+    reply: (text: string) => void
+) {
+    const [chatId, msgId] = decomposeMsgLink(link);
+    if (!chatId || !msgId) return [null, null];
+
+    let chatNumId = chatId;
+    // if chatId is not a number, it's a username
+    if (isNaN(Number(chatId))) {
+        const chatInfo = await bot.api.getChat("@" + chatId);
+        if (chatInfo.type !== "group" && chatInfo.type !== "supergroup") {
+            reply(
+                "It's not a group chat message. Please input the correct chat message link."
+            );
+            return [null, null];
+        }
+        chatNumId = chatInfo.id.toString().slice(4);
+    }
+    return [chatNumId, msgId];
 }
 
 export function storeMsg(

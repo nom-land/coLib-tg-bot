@@ -23,7 +23,7 @@ import {
     getPosterAccount,
     getChannelBroadcastAuthorAccount,
     storeMsg,
-    getMessageKeyFromLink,
+    getKeyFromGroupMessageLink,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import { Message } from "grammy/types";
@@ -148,7 +148,8 @@ async function main() {
                                 ctx,
                                 contextMap,
                                 bot,
-                                nomland
+                                nomland,
+                                reply
                             );
                             if (!result) return;
                             shareParams = {
@@ -170,17 +171,25 @@ async function main() {
                         }
 
                         const [chatId, chatMsgId] =
-                            getMessageKeyFromLink(msgLink);
+                            await getKeyFromGroupMessageLink(
+                                msgLink,
+                                bot,
+                                reply
+                            );
                         if (!chatId || !chatMsgId) {
                             reply(
-                                "Please input the correct message link of this channel broadcast."
+                                "Please input the correct chat message link of this channel broadcast."
                             );
                             return;
                         }
 
                         if (shareParams?.channelChatId !== chatId) {
                             reply(
-                                "Message link mismatches. Please input the correct message link of this channel broadcast."
+                                "Message link mismatches: Expected: " +
+                                    shareParams?.channelChatId +
+                                    ", but got: " +
+                                    chatId +
+                                    ". Please input the correct message link of this channel broadcast."
                             );
                             return;
                         }
@@ -276,7 +285,11 @@ async function main() {
                         }
 
                         const [chatId, chatMsgId] =
-                            getMessageKeyFromLink(msgLink);
+                            await getKeyFromGroupMessageLink(
+                                msgLink,
+                                bot,
+                                reply
+                            );
 
                         if (!chatId || !chatMsgId) {
                             reply(
