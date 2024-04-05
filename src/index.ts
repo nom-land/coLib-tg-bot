@@ -732,7 +732,9 @@ async function main() {
                             if (replyNoteKey) {
                                 storeMsg(
                                     idMap,
-                                    chatId + "-" + chatMsgId,
+                                    replyParams.chatId +
+                                        "-" +
+                                        replyParams.replyMsgId,
                                     replyNoteKey
                                 );
                                 reply(
