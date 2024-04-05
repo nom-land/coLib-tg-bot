@@ -414,42 +414,57 @@ async function main() {
                             }
                         } else if (msgText.startsWith("/setcontext")) {
                             const channelId = msgText.split(" ")[1];
-                            const channelChatId = msgText.split(" ")[2];
-                            const contextId = msgText.split(" ")[3];
-                            const idDesc = msgText.split(" ")[4];
-                            if (
-                                !channelId ||
-                                !channelChatId ||
-                                !contextId ||
-                                !idDesc
-                            ) {
+                            const contextId = msgText.split(" ")[2];
+                            const idDesc = msgText.split(" ")[3];
+                            if (!channelId || !contextId || !idDesc) {
                                 reply("Invalid input.");
                                 return;
                             }
-                            setKeyValue(
-                                channelId,
-                                contextId,
-                                settings.contextMapTblName
+                            const chatInfo = await bot.api.getChat(
+                                "-100" + channelId
                             );
-                            setKeyValue(
-                                channelChatId,
-                                contextId,
-                                settings.contextMapTblName
-                            );
-                            setKeyValue(
-                                "// " +
-                                    channelChatId +
-                                    " " +
-                                    idDesc +
-                                    " Chat Group",
-                                contextId,
-                                settings.contextMapTblName
-                            );
-                            setKeyValue(
-                                "// " + channelId + " " + idDesc + " Channel",
-                                contextId,
-                                settings.contextMapTblName
-                            );
+
+                            if ("linked_chat_id" in chatInfo) {
+                                const channelChatId = (
+                                    chatInfo as any
+                                ).linked_chat_id
+                                    .toString()
+                                    .slice(4);
+
+                                setKeyValue(
+                                    channelId,
+                                    contextId,
+                                    settings.contextMapTblName
+                                );
+                                setKeyValue(
+                                    channelChatId,
+                                    contextId,
+                                    settings.contextMapTblName
+                                );
+                                setKeyValue(
+                                    "// " +
+                                        channelChatId +
+                                        " " +
+                                        idDesc +
+                                        " Chat Group",
+                                    contextId,
+                                    settings.contextMapTblName
+                                );
+                                setKeyValue(
+                                    "// " +
+                                        channelId +
+                                        " " +
+                                        idDesc +
+                                        " Channel",
+                                    contextId,
+                                    settings.contextMapTblName
+                                );
+                            } else {
+                                reply(
+                                    "This channel has not been bound with a chat."
+                                );
+                                return;
+                            }
                         }
                     }
                 }
