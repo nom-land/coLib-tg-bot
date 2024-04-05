@@ -416,22 +416,22 @@ async function main() {
                             }
                             reply("Succeed.");
                         } else if (msgText.startsWith("/setcontext")) {
-                            const channelId = msgText.split(" ")[1];
+                            const channelIdentifier = msgText.split(" ")[1];
                             const contextId = msgText.split(" ")[2];
                             const idDesc = msgText.split(" ")[3];
-                            if (!channelId || !contextId || !idDesc) {
+                            if (!channelIdentifier || !contextId || !idDesc) {
                                 reply("Invalid input.");
                                 return;
                             }
 
-                            const chat_id = isNaN(Number(channelId))
-                                ? channelId.startsWith("@")
-                                    ? channelId
-                                    : "@" + channelId
-                                : "-100" + channelId;
+                            const chat_id = isNaN(Number(channelIdentifier))
+                                ? channelIdentifier.startsWith("@")
+                                    ? channelIdentifier
+                                    : "@" + channelIdentifier
+                                : "-100" + channelIdentifier;
 
                             const chatInfo = await bot.api.getChat(chat_id);
-
+                            const channelId = chatInfo.id.toString().slice(4);
                             if ("linked_chat_id" in chatInfo) {
                                 const channelChatId = (
                                     chatInfo as any
