@@ -25,6 +25,7 @@ import {
     storeMsg,
     getKeyFromGroupMessageLink,
     getContextFromChat,
+    storeContextMapValue,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import { Message, User } from "grammy/types";
@@ -410,8 +411,10 @@ async function main() {
                                         k,
                                         settings.contextMapTblName
                                     );
+                                    contextMap.delete(k);
                                 }
                             }
+                            reply("Succeed.");
                         } else if (msgText.startsWith("/setcontext")) {
                             const channelId = msgText.split(" ")[1];
                             const contextId = msgText.split(" ")[2];
@@ -436,33 +439,33 @@ async function main() {
                                     .toString()
                                     .slice(4);
 
-                                setKeyValue(
+                                storeContextMapValue(
                                     channelId,
                                     contextId,
-                                    settings.contextMapTblName
+                                    contextMap
                                 );
-                                setKeyValue(
+                                storeContextMapValue(
                                     channelChatId,
                                     contextId,
-                                    settings.contextMapTblName
+                                    contextMap
                                 );
-                                setKeyValue(
+                                storeContextMapValue(
                                     "// " +
                                         channelChatId +
                                         " " +
                                         idDesc +
                                         " Chat Group",
                                     contextId,
-                                    settings.contextMapTblName
+                                    contextMap
                                 );
-                                setKeyValue(
+                                storeContextMapValue(
                                     "// " +
                                         channelId +
                                         " " +
                                         idDesc +
                                         " Channel",
                                     contextId,
-                                    settings.contextMapTblName
+                                    contextMap
                                 );
                                 reply("Succeed.");
                             } else {

@@ -469,6 +469,16 @@ export async function getKeyFromGroupMessageLink(
     return [chatNumId, msgId];
 }
 
+export function storeContextMapValue(
+    key: string,
+    value: string,
+    contextMap: Map<string, string>
+) {
+    if (setKeyValue(key, value, settings.contextMapTblName)) {
+        contextMap.set(key, value);
+    }
+}
+
 export function storeMsg(
     idMap: Map<string, string>,
     msgKey: string,
