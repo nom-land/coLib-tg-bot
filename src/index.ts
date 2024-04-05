@@ -26,6 +26,7 @@ import {
     getKeyFromGroupMessageLink,
     getContextFromChat,
     storeContextMapValue,
+    convertDate,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import { Message, User } from "grammy/types";
@@ -178,7 +179,7 @@ async function main() {
                                         ...result,
                                     };
                                     reply(
-                                        "Please continue to input the chat message link of this channel broadcast."
+                                        "Please continue to input the chat message link of this channel broadcast.\n填写群链接！！不能带channel地址的那个！！！"
                                     );
                                     manualShareCmdStatus = "WAIT_MSG_ID";
                                 }
@@ -186,7 +187,7 @@ async function main() {
                                 const msgLink = getFirstUrl(msg.text || "");
                                 if (!msgLink) {
                                     reply(
-                                        "Please continue to input the chat message link of this channel broadcast."
+                                        "Please continue to input the chat message link of this channel broadcast.\n填写群链接！！不能带channel地址的那个！！！"
                                     );
                                     return;
                                 }
@@ -199,7 +200,7 @@ async function main() {
                                     );
                                 if (!chatId || !chatMsgId) {
                                     reply(
-                                        "Please input the correct chat message link of this channel broadcast."
+                                        "Please input the correct chat message link of this channel broadcast.\n填写群链接！！不能带channel地址的那个！！！"
                                     );
                                     return;
                                 }
@@ -516,9 +517,9 @@ async function main() {
                                     bot.token
                                 );
 
-                                const date_published = new Date(
+                                const date_published = convertDate(
                                     msg.forward_date
-                                ).toISOString();
+                                );
 
                                 if (
                                     fwdOrigin &&
@@ -561,7 +562,7 @@ async function main() {
                                     };
                                     manualReplyCmdStatus = "WAIT_RPL_MSG_ID";
                                     reply(
-                                        "Please continue to input the link of this reply message."
+                                        "Please continue to input the link of this reply message.\n填写这条回复的群链接！！不能带channel地址的那个！！！"
                                     );
                                 }
                             }
@@ -635,7 +636,7 @@ async function main() {
                             replyParams.replyMsgId = chatMsgId;
 
                             reply(
-                                "Please input the message link that you want to reply."
+                                "Please input the message link that you want to reply.\n填写被回复的消息的群链接！！不能带channel地址的那个！！！"
                             );
                             manualReplyCmdStatus = "WAIT_MSG_ID";
                         } else if (manualReplyCmdStatus === "WAIT_MSG_ID") {
