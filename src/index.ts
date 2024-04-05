@@ -464,6 +464,7 @@ async function main() {
                                     contextId,
                                     settings.contextMapTblName
                                 );
+                                reply("Succeed.");
                             } else {
                                 reply(
                                     "This channel has not been bound with a chat."
