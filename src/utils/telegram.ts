@@ -19,6 +19,7 @@ import {
     getNoteKey,
     getSenderChatId,
     getShareDetails,
+    getShareUrlFromMsg,
     storeMsg,
 } from "./common";
 import { createShare } from "./nomland";
@@ -236,10 +237,8 @@ export async function prepareFwdMessage(
         return;
     }
 
-    const msgText = getMsgText(msg);
-    if (!msgText) return;
+    const url = getShareUrlFromMsg(msg);
 
-    const url = getFirstUrl(msgText);
     if (!url) {
         reply("Message has no url.");
         return;

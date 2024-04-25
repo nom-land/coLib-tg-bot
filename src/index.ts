@@ -27,7 +27,7 @@ import {
     getContextFromChat,
     storeContextMapValue,
     convertDate,
-    filterUrl,
+    getShareUrlFromMsg,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import { Message, User } from "grammy/types";
@@ -884,12 +884,8 @@ async function processShareInChannel(
         // if (!msg.forward_signature) return;
         if (!msg.sender_chat?.id) return;
 
-        const msgText = getMsgText(msg);
-        if (!msgText) return;
-
         // TODO: multiple urls
-        const url = filterUrl(getFirstUrl(msgText));
-
+        const url = getShareUrlFromMsg(msg);
         if (url) {
             const authorAccount = msg.forward_signature
                 ? await getChannelBroadcastAuthorAccount(
