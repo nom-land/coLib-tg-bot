@@ -34,6 +34,38 @@ export function getFirstUrl(str: string) {
     return urls ? urls[0] : null;
 }
 
+// Only apply to channel sharing
+export function filterUrl(url: string | null) {
+    if (!url) return null;
+    const ignoreList = [
+        "notion.site",
+        "notion.so",
+        "docs.google.com",
+        "meet.google.com",
+        "photos.google.com",
+        "drive.google.com",
+        "calendar.google.com",
+        "dropbox",
+        "dropbox.com",
+        "discord.gg",
+        "zoom.us",
+        "zoom.com",
+        "meeting.tencent.com",
+        "tally.so",
+        "twitter.com/i/spaces/",
+        "lu.ma",
+        "app.sola.day",
+        "artsandculture.google.com",
+        "google.com/map",
+        "google.com/travel",
+        "store.google.com",
+    ];
+    if (ignoreList.some((i) => url.includes(i))) {
+        return null;
+    }
+    return url;
+}
+
 export function cleanContent(str: string) {
     // remove URLs and mentions and tags and trim
     // TODO: Or remove by entities?

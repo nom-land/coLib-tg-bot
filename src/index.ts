@@ -27,6 +27,7 @@ import {
     getContextFromChat,
     storeContextMapValue,
     convertDate,
+    filterUrl,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import { Message, User } from "grammy/types";
@@ -887,9 +888,7 @@ async function processShareInChannel(
         if (!msgText) return;
 
         // TODO: multiple urls
-        const url = getFirstUrl(msgText);
-        // TODO: filter url
-        console.log(url);
+        const url = filterUrl(getFirstUrl(msgText));
 
         if (url) {
             const authorAccount = msg.forward_signature
