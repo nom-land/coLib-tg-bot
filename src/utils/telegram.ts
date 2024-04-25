@@ -9,7 +9,6 @@ import {
     getContext,
     getContextFromChat,
     getEntities,
-    getFirstUrl,
     getFwdMsgShareDetails,
     getMessageIdFromFwd,
     getMessageKey,

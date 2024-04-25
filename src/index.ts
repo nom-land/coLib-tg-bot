@@ -28,9 +28,9 @@ import {
     storeContextMapValue,
     convertDate,
     getShareUrlFromMsg,
+    getUrlFromMessage,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
-import { Message, User } from "grammy/types";
 import {
     setKeyValue,
     loadKeyValuePairs,
@@ -804,10 +804,7 @@ async function processShareInGroup(
         const msg = ctx.msg;
         if (!msg.from) return;
 
-        const msgText = getMsgText(msg);
-        if (!msgText) return;
-
-        const url = getFirstUrl(msgText);
+        const url = getUrlFromMessage(msg);
 
         let notRecognized = true;
 
@@ -831,9 +828,8 @@ async function processShareInGroup(
             // Scenario 2: the reply to message is a share
             const replyToMsg = msg.reply_to_message;
             if (replyToMsg) {
-                const replyToMsgText = getMsgText(replyToMsg as Message);
-                if (replyToMsgText && replyToMsg.from) {
-                    const replyToMsgUrl = getFirstUrl(replyToMsgText);
+                if (replyToMsg.from) {
+                    const replyToMsgUrl = getShareUrlFromMsg(replyToMsg);
                     if (replyToMsgUrl) {
                         const author = await getPosterAccount(
                             msg.from,

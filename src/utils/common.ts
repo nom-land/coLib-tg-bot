@@ -4,6 +4,7 @@ import {
     ChatMemberAdministrator,
     ChatMemberOwner,
     Message,
+    MessageEntity,
     User,
     UserProfilePhotos,
 } from "grammy/types";
@@ -34,13 +35,27 @@ export function getFirstUrl(str: string) {
     return urls ? urls[0] : null;
 }
 
-export function getShareUrlFromMsg(msg: Message) {
+export function getUrlFromMessage(msg: Message) {
     const msgText = getMsgText(msg);
     if (!msgText) return;
 
+    const url = getFirstUrl(msgText);
+    if (url) return url;
+    console.log("msg.entities", msg.entities);
+    if (msg.entities) {
+        for (const entity of msg.entities) {
+            if (entity.type === "text_link") {
+                return (entity as any).url as string;
+            }
+        }
+    }
+}
+
+export function getShareUrlFromMsg(msg: Message) {
+    const url = getUrlFromMessage(msg);
+
     // TODO: multiple urls
-    const url = filterUrl(getFirstUrl(msgText));
-    return url;
+    return filterUrl(url);
 }
 
 export function cleanContent(str: string) {
@@ -513,7 +528,7 @@ function getChannelBroadcastAuthor(
 }
 
 // Only apply to channel sharing
-function filterUrl(url: string | null) {
+function filterUrl(url: string | null | undefined) {
     if (!url) return null;
     const ignoreList = [
         "notion.site",
