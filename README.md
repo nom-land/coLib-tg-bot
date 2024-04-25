@@ -1,6 +1,6 @@
 # Nunti
 
-Nunti is a Telegram bot developed as part of the [coLib](https://colib.app) project. Nunti can help aggregate and parse the sharing message in both telegram channel and group.
+Nunti is a Telegram bot developed as part of the [coLib](https://colib.app) project. Nunti can help aggregate and parse the share message in both telegram channel and group.
 
 You can find nunti at [@nuntibot](https://t.me/nuntibot).
 
@@ -32,7 +32,7 @@ Nunti offers the option to use Elephant SDK as the URL parser, which is based on
 ### Development
 ```
 # For the first time to run the app, you need to manually create the `./store` folder
-touch store
+mkdir -p store
 
 # Develop
 pnpm dev 
