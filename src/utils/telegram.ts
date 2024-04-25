@@ -4,7 +4,6 @@ import { helpMsg } from "./constants";
 import { settings } from "../config";
 import {
     getChannelBroadcastAuthorAccount,
-    getChannelChatIdByChannelId,
     getChannelId,
     getChatId,
     getContext,
@@ -114,7 +113,7 @@ export function parseMsgLink(link: string) {
 
 export async function processShareMsg(
     ctx: CommandContext<Context>,
-    author: Accountish,
+    author: Accountish | undefined,
     idMap: Map<string, string>,
     ctxMap: Map<string, string>,
     nom: NomlandNode,
@@ -149,7 +148,8 @@ export async function processShareMsg(
             nom,
             url,
             details,
-            author,
+            // if the author is not provided, we use the community as the author
+            author || community,
             community,
             replyTo,
             "elephant"
@@ -236,11 +236,6 @@ export async function prepareFwdMessage(
         return;
     }
 
-    if (!msg.forward_signature) {
-        reply("Signature is not activated.");
-        return;
-    }
-
     const msgText = getMsgText(msg);
     if (!msgText) return;
 
@@ -250,17 +245,22 @@ export async function prepareFwdMessage(
         return;
     }
 
-    const authorAccount = await getChannelBroadcastAuthorAccount(
-        "-100" + channelId,
-        msg.forward_signature,
-        bot,
-        ctx as any,
-        nomland
-    );
+    // If the message is not signed, we use the context as the author
+    const authorAccount = msg.forward_signature
+        ? await getChannelBroadcastAuthorAccount(
+              "-100" + channelId,
+              msg.forward_signature,
+              bot,
+              ctx as any,
+              nomland
+          )
+        : context;
+
     if (!authorAccount) {
         reply("Fail to get the author.");
         return;
     }
+
     const msgAttachments = await getNoteAttachments(ctx as any, msg, bot.token);
     const details = getFwdMsgShareDetails(msg);
     if (!details) {

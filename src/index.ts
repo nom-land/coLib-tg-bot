@@ -36,6 +36,12 @@ import {
     removeKeyValue,
 } from "./utils/keyValueStore";
 import { createShare } from "./utils/nomland";
+import {
+    ManualReplyCmdStatus,
+    ManualShareCmdStatus,
+    ReplyParams,
+    ShareParams,
+} from "./types/command";
 
 async function main() {
     try {
@@ -89,40 +95,7 @@ async function main() {
         });
 
         let shareParams: ShareParams | undefined;
-        interface ShareParams {
-            url: string;
-            details: NoteDetails;
-            authorAccount: Accountish;
-            context: Accountish;
-            channelId: string;
-            broadcastId: string;
-            channelChatId: string;
-            chatMsgId: string | null;
-        }
-        type ManualShareCmdStatus =
-            | "START"
-            | "WAIT_MSG_ID"
-            | "WAIT_RPL_OPTION"
-            // | "RPL_OPTION_RECEIVED"
-            | "WAIT_EDIT_LINK";
-        // | "EDI_MSG_ID_RECEIVED";
-
         let replyParams: ReplyParams | undefined;
-
-        interface ReplyParams {
-            userType: "hidden_user" | "user";
-            user: User | null;
-            authorId: string | null;
-            details: NoteDetails;
-            chatId: string | null;
-            replyMsgId: string | null;
-            originalMsgId: string | null;
-        }
-        type ManualReplyCmdStatus =
-            | "START"
-            | "WAIT_AUTHOR_ID"
-            | "WAIT_MSG_ID"
-            | "WAIT_RPL_MSG_ID";
 
         let manualShareCmdStatus: ManualShareCmdStatus = "START";
         let manualReplyCmdStatus: ManualReplyCmdStatus = "START";
@@ -907,7 +880,7 @@ async function processShareInChannel(
     try {
         const msg = ctx.msg;
 
-        if (!msg.forward_signature) return;
+        // if (!msg.forward_signature) return;
         if (!msg.sender_chat?.id) return;
 
         const msgText = getMsgText(msg);
@@ -916,27 +889,29 @@ async function processShareInChannel(
         // TODO: multiple urls
         const url = getFirstUrl(msgText);
         // TODO: filter url
+        console.log(url);
 
         if (url) {
-            const authorAccount = await getChannelBroadcastAuthorAccount(
-                msg.sender_chat.id,
-                msg.forward_signature,
-                bot,
+            const authorAccount = msg.forward_signature
+                ? await getChannelBroadcastAuthorAccount(
+                      msg.sender_chat.id,
+                      msg.forward_signature,
+                      bot,
+                      ctx,
+                      nomland
+                  )
+                : undefined;
+
+            processShareMsg(
                 ctx,
-                nomland
+                authorAccount,
+                idMap,
+                ctxMap,
+                nomland,
+                url,
+                bot,
+                "channel"
             );
-            if (authorAccount) {
-                processShareMsg(
-                    ctx,
-                    authorAccount,
-                    idMap,
-                    ctxMap,
-                    nomland,
-                    url,
-                    bot,
-                    "channel"
-                );
-            }
         }
     } catch (e) {
         console.log(e);
