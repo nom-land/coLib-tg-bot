@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { log } from "./utils/log";
-import Nomland, { Accountish, NoteDetails } from "nomland.js";
+import Nomland, { Accountish } from "nomland.js";
 
 import {
     getReplyToMsgId,
@@ -375,7 +375,6 @@ async function main() {
                         const msgText = getMsgText(msg);
                         if (!msgText) return;
 
-                        console.log(contextMap);
                         if (msgText.startsWith("/ls")) {
                             let text = "";
                             for (const [k, v] of contextMap) {
@@ -724,6 +723,67 @@ async function main() {
 
                             manualReplyCmdStatus = "START";
                             replyParams = undefined;
+                        }
+                    }
+                }
+                if (settings.adminEditTopicId) {
+                    if (
+                        msg.reply_to_message?.message_id ===
+                        settings.adminEditTopicId
+                    ) {
+                        const reply = (text: string) => {
+                            ctx.reply(text, {
+                                reply_to_message_id: settings.adminEditTopicId,
+                            });
+                        };
+                        const msgText = getMsgText(msg);
+                        if (!msgText) return;
+
+                        try {
+                            if (msgText.startsWith("/setName")) {
+                                const characterId = msgText.split(" ")[1];
+                                const newName = msgText
+                                    .split(" ")
+                                    .slice(2)
+                                    .join(" ");
+                                // const character =
+                                //     await nomland.contract.character.get({
+                                //         characterId,
+                                //     });
+                                // if (!character) {
+                                //     reply("Character not found.");
+                                //     return;
+                                // }
+
+                                await nomland.editEntityOrContext(
+                                    characterId,
+                                    (oldMetadata) => {
+                                        oldMetadata.name = newName;
+                                        return oldMetadata;
+                                    }
+                                );
+
+                                reply("Succeed.");
+                            }
+                            if (msgText.startsWith("/getName")) {
+                                const characterId = msgText.split(" ")[1];
+
+                                const character =
+                                    await nomland.contract.character.get({
+                                        characterId,
+                                    });
+                                if (!character) {
+                                    reply("Character not found.");
+                                    return;
+                                }
+
+                                const name = character.data.metadata?.name;
+
+                                reply(name || "Name not found.");
+                            }
+                        } catch (e) {
+                            reply("Something went wrong.");
+                            console.log(e);
                         }
                     }
                 }
