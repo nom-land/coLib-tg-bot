@@ -242,16 +242,15 @@ export async function prepareFwdMessage(
         reply("Message has no url.");
         return;
     }
-
     // If the message is not signed, we use the context as the author
     const authorAccount = msg.forward_signature
-        ? await getChannelBroadcastAuthorAccount(
+        ? (await getChannelBroadcastAuthorAccount(
               "-100" + channelId,
               msg.forward_signature,
               bot,
               ctx as any,
               nomland
-          )
+          )) || context
         : context;
 
     if (!authorAccount) {
