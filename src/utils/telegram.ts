@@ -180,6 +180,14 @@ export async function processShareMsg(
                 res.message_id,
                 settings.prompt.fail
             );
+            await ctx.api.forwardMessage(
+                settings.adminGroupId,
+                ctx.msg.chat.id,
+                ctx.msg.message_id,
+                {
+                    message_thread_id: settings.adminErrorLogTopicId,
+                }
+            );
         }
     } catch (e) {
         console.log(e);
