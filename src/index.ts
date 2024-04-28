@@ -29,6 +29,7 @@ import {
     convertDate,
     getShareUrlFromMsg,
     getUrlFromMessage,
+    getShareDetails,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import {
@@ -794,6 +795,8 @@ async function main() {
                 return;
             }
 
+            console.log("Message received: ", ctx.msg);
+            console.log(getShareDetails(msg, bot.botInfo.username));
             // Share will be processed in the following cases:
             // 1. It's a channel broadcast message and contains a URL.
             // 2. It's not a channel message and it's a reply to a channel broadcast
@@ -805,13 +808,13 @@ async function main() {
             //          b. The author of the two messages are different: the URL and the content of the reply message will be processed as curation, and the curator will be the author of the reply message.
             //      3.3. @Bot && not covered by 1 and 2: /help
             if (getMsgOrigin(msg) === "channel") {
-                processShareInChannel(
-                    ctx as any,
-                    nomland,
-                    bot,
-                    idMap,
-                    contextMap
-                );
+                // processShareInChannel(
+                //     ctx as any,
+                //     nomland,
+                //     bot,
+                //     idMap,
+                //     contextMap
+                // );
             } else {
                 if (mentions(msg, botUsername)) {
                     // TODO: only the first file will be processed, caused by Telegram design

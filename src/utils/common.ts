@@ -28,7 +28,7 @@ import NomlandNode from "nomland.js";
 
 const urlRegex = /(http|https):\/\/[^\s]+/g;
 const tagRegex = /#[^\s]+/g;
-const mentionsRegex = /@[^\s]+/g;
+// const mentionsRegex = /@[^\s]+/g;
 
 //TODO: support multiple URLs
 export function getFirstUrl(str: string) {
@@ -59,18 +59,47 @@ export function getShareUrlFromMsg(msg: Message) {
     return filterUrl(url);
 }
 
-export function cleanContent(str: string) {
+export function cleanContent(str: string, botName: string) {
     // remove URLs and mentions and tags and trim
     // TODO: Or remove by entities?
-    return str
-        .replaceAll(urlRegex, "")
-        .replaceAll(mentionsRegex, "")
-        .replaceAll(tagRegex, "")
-        .trim();
+    return (
+        str
+            .replaceAll(urlRegex, "")
+            .replaceAll("@" + botName, "")
+            // .replaceAll(tagRegex, "")
+            .trim()
+    );
 }
+
 export function getTags(str: string) {
     const tags = str.match(tagRegex);
     return tags ? tags : [];
+}
+
+export function removeTags(msg: Message) {
+    const msgText = getMsgText(msg)!;
+
+    let contentWithoutTags = msgText!;
+    let reducedLength = 0;
+    const tags = [] as string[];
+    const entities = getEntities(msg);
+    if (!entities) return { tags, contentWithoutTags };
+
+    entities.forEach((entity) => {
+        if (entity.type === "hashtag") {
+            tags.push(
+                msgText.slice(entity.offset + 1, entity.offset + entity.length)
+            );
+            contentWithoutTags =
+                contentWithoutTags.slice(0, entity.offset - reducedLength) +
+                contentWithoutTags.slice(
+                    entity.offset + entity.length - reducedLength
+                );
+            reducedLength += entity.length;
+        }
+    });
+
+    return { tags, contentWithoutTags };
 }
 
 export function convertDate(date: number) {
@@ -84,7 +113,7 @@ export function convertDate(date: number) {
 }
 
 // get message details without attachment
-export function getShareDetails(msg: Message) {
+export function getShareDetails(msg: Message, botName: string) {
     const text = getMsgText(msg);
     if (!text) return null;
 
@@ -98,9 +127,8 @@ export function getShareDetails(msg: Message) {
         msg.reply_to_message?.forum_topic_created?.name || "General";
     const msgLink = makeMsgLink(msg);
 
-    // const contentAfterBot = text.split(botName)[1]; // TODO? remove it?
-    const tags = getTags(text).map((t) => t.slice(1));
-    const content = cleanContent(text);
+    const { tags, contentWithoutTags } = removeTags(msg);
+    const content = cleanContent(contentWithoutTags, botName);
 
     const raw = {
         content,
@@ -160,7 +188,7 @@ export function getChannelChatIdByChannelId(
 }
 
 // get forward message details without attachment
-export function getFwdMsgShareDetails(msg: Message) {
+export function getFwdMsgShareDetails(msg: Message, botName: string) {
     if (!msg.forward_from_chat) return null;
     if (!msg.forward_date) return null;
 
@@ -188,8 +216,8 @@ export function getFwdMsgShareDetails(msg: Message) {
     }
 
     // const contentAfterBot = text.split(botName)[1]; // TODO? remove it?
-    const tags = getTags(text).map((t) => t.slice(1));
-    const content = cleanContent(text);
+    const { tags, contentWithoutTags } = removeTags(msg);
+    const content = cleanContent(contentWithoutTags, botName);
 
     const raw = {
         content,

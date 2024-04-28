@@ -136,7 +136,7 @@ export async function processShareMsg(
 
         if (!msg.from) return;
 
-        const details = getShareDetails(msg);
+        const details = getShareDetails(msg, bot.botInfo.username);
         if (!details) return;
 
         details.attachments = msgAttachments;
@@ -259,7 +259,7 @@ export async function prepareFwdMessage(
     }
 
     const msgAttachments = await getNoteAttachments(ctx as any, msg, bot.token);
-    const details = getFwdMsgShareDetails(msg);
+    const details = getFwdMsgShareDetails(msg, bot.botInfo.username);
     if (!details) {
         reply("Fail to get the share details.");
         return;
