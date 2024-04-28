@@ -4,7 +4,6 @@ import {
     ChatMemberAdministrator,
     ChatMemberOwner,
     Message,
-    MessageEntity,
     User,
     UserProfilePhotos,
 } from "grammy/types";
@@ -24,6 +23,8 @@ import { Bot, CommandContext, Context } from "grammy";
 import { ipfsUploadFile } from "crossbell/ipfs";
 import { NoteMetadataAttachmentBase } from "crossbell";
 import { log } from "./log";
+import md5 from "md5";
+import NomlandNode from "nomland.js";
 
 const urlRegex = /(http|https):\/\/[^\s]+/g;
 const tagRegex = /#[^\s]+/g;
@@ -437,10 +438,12 @@ export function getContextFromChat(
     });
 }
 
-export function getContext(
+export async function getContext(
     msg: Message,
+    ctx: CommandContext<Context>,
+    nomland: NomlandNode,
     ctxMap?: Map<string, string>
-): Accountish | null {
+): Promise<Accountish | null> {
     if (msg.chat.type === "private") {
         // TODO: What private chat means?
         return null;
@@ -452,7 +455,25 @@ export function getContext(
         return Number(ctxMap.get(groupId)) || null;
     }
 
-    return makeAccount(msg.chat);
+    const ctxHandle = getContextHandle(msg);
+    const contextId = await getCharacter(ctxHandle, nomland);
+    if (Number(contextId) === 0) {
+        const chatInfo = await ctx.api.getChat(msg.chat.id);
+        if ("linked_chat_id" in chatInfo) {
+            const channelId = (chatInfo as any).linked_chat_id.toString();
+            const linkedChatInfo = await ctx.api.getChat(channelId);
+            if (linkedChatInfo.type === "channel") {
+                const context = makeAccount(msg.chat);
+                context.nickname = linkedChatInfo.title;
+                context.description = linkedChatInfo.description;
+                return context;
+            }
+        }
+        const context = makeAccount(msg.chat);
+        return context;
+    } else {
+        return contextId;
+    }
 }
 
 export function getNoteKey(noteKeyString: string) {
@@ -557,4 +578,24 @@ function filterUrl(url: string | null | undefined) {
         return null;
     }
     return url;
+}
+
+function getContextHandle(msg: Message) {
+    const handle = hashOf(msg.chat.id.toString(), 12);
+    return handle;
+}
+
+// TODO: import from nomland
+async function getCharacter(handle: string, nomland: Nomland) {
+    const { data } = await nomland.contract.character.getByHandle({
+        handle,
+    });
+    return data.characterId;
+}
+
+// TODO: import from nomland
+function hashOf(content: string, digits = 4, suffix = true): string {
+    const hash = md5(content);
+    if (suffix) return hash.slice(hash.length - digits, hash.length);
+    else return hash.slice(0, digits);
 }

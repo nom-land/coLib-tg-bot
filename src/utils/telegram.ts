@@ -22,7 +22,7 @@ import {
     storeMsg,
 } from "./common";
 import { createShare } from "./nomland";
-import NomlandNode, { Accountish, makeAccount } from "nomland.js";
+import NomlandNode, { Accountish } from "nomland.js";
 import { assert } from "console";
 export interface RawMessage {
     content: string;
@@ -126,7 +126,7 @@ export async function processShareMsg(
 
         const msgAttachments = await getNoteAttachments(ctx, msg, bot.token);
 
-        const community = getContext(msg, ctxMap);
+        const community = await getContext(msg, ctx, nom, ctxMap);
 
         if (!community) return;
 

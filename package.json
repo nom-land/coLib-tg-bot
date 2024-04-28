@@ -14,6 +14,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/bunyan": "^1.8.11",
+    "@types/md5": "^2.3.5",
     "@types/node": "^20.9.0",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1",
@@ -25,7 +26,7 @@
     "dotenv": "^16.3.1",
     "grammy": "^1.19.2",
     "md5": "^2.3.0",
-    "nomland.js": "0.5.4",
+    "nomland.js": "0.5.6",
     "tsup": "^7.2.0",
     "viem": "1.19.3"
   }

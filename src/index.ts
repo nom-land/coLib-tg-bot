@@ -43,6 +43,7 @@ import {
     ReplyParams,
     ShareParams,
 } from "./types/command";
+import NomlandNode from "nomland.js";
 
 async function main() {
     try {
@@ -911,7 +912,7 @@ async function processShareInChannel(
 
 async function processReply(
     ctx: CommandContext<Context>,
-    nomland: Nomland,
+    nomland: NomlandNode,
     bot: Bot,
     idMap: Map<string, string>,
     ctxMap: Map<string, string>
@@ -919,7 +920,7 @@ async function processReply(
     const msg = ctx.msg;
     if (!msg.from) return;
 
-    const context = getContext(msg, ctxMap);
+    const context = await getContext(msg, ctx, nomland, ctxMap);
     if (!context) return;
 
     const msgText = getMsgText(msg) || "";
