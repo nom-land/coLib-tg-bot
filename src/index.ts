@@ -386,7 +386,6 @@ async function main() {
                             reply(text);
                         } else if (msgText.startsWith("/remove")) {
                             const contextId = msgText.split(" ")[1];
-                            console.log(contextId);
                             for (const [k, v] of contextMap) {
                                 if (v === contextId) {
                                     removeKeyValue(
@@ -677,7 +676,6 @@ async function main() {
                             ) {
                                 poster = replyParams.authorId;
                             } else {
-                                console.log(replyParams);
                                 reply("Internal Error. Please try again.");
                                 manualReplyCmdStatus = "START";
                                 return;
@@ -695,7 +693,6 @@ async function main() {
                                 manualReplyCmdStatus = "START";
                                 return;
                             }
-                            console.log(contextId);
 
                             const replyNoteKey = await nomland.createReply(
                                 poster,
@@ -747,14 +744,6 @@ async function main() {
                                     .split(" ")
                                     .slice(2)
                                     .join(" ");
-                                // const character =
-                                //     await nomland.contract.character.get({
-                                //         characterId,
-                                //     });
-                                // if (!character) {
-                                //     reply("Character not found.");
-                                //     return;
-                                // }
 
                                 await nomland.editEntityOrContext(
                                     characterId,
@@ -795,8 +784,6 @@ async function main() {
                 return;
             }
 
-            console.log("Message received: ", ctx.msg);
-            console.log(getShareDetails(msg, bot.botInfo.username));
             // Share will be processed in the following cases:
             // 1. It's a channel broadcast message and contains a URL.
             // 2. It's not a channel message and it's a reply to a channel broadcast
@@ -808,6 +795,10 @@ async function main() {
             //          b. The author of the two messages are different: the URL and the content of the reply message will be processed as curation, and the curator will be the author of the reply message.
             //      3.3. @Bot && not covered by 1 and 2: /help
             if (getMsgOrigin(msg) === "channel") {
+                if (msg.forward_from) {
+                    // Forwarded message will be ignored
+                    return;
+                }
                 processShareInChannel(
                     ctx as any,
                     nomland,
