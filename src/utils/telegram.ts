@@ -119,7 +119,8 @@ export async function processShareMsg(
     nom: NomlandNode,
     url: string,
     bot: Bot,
-    msgOrigin: "channel" | "group"
+    msgOrigin: "channel" | "group",
+    silent?: boolean
 ) {
     try {
         const msg = ctx.msg;
@@ -130,9 +131,11 @@ export async function processShareMsg(
 
         if (!community) return;
 
-        const res = await ctx.reply(settings.prompt.load, {
-            reply_to_message_id: msg.message_id,
-        });
+        let res: Message.TextMessage;
+        if (!silent)
+            res = await ctx.reply(settings.prompt.load, {
+                reply_to_message_id: msg.message_id,
+            });
 
         if (!msg.from) return;
 
@@ -158,28 +161,31 @@ export async function processShareMsg(
             const msgKey = getMessageKey(msg);
 
             storeMsg(idMap, msgKey, shareNoteKey);
-            if (msgOrigin === "group") {
-                await ctx.api.editMessageText(
-                    res.chat.id,
-                    res.message_id,
-                    settings.prompt.groupSucceed(shareNoteKey)
-                );
-            } else {
-                await ctx.api.editMessageText(
-                    res.chat.id,
-                    res.message_id,
-                    settings.prompt.channelSucceed(shareNoteKey),
-                    {
-                        parse_mode: "HTML",
-                    }
-                );
+            if (!silent) {
+                if (msgOrigin === "group") {
+                    await ctx.api.editMessageText(
+                        res!.chat.id,
+                        res!.message_id,
+                        settings.prompt.groupSucceed(shareNoteKey)
+                    );
+                } else {
+                    await ctx.api.editMessageText(
+                        res!.chat.id,
+                        res!.message_id,
+                        settings.prompt.channelSucceed(shareNoteKey),
+                        {
+                            parse_mode: "HTML",
+                        }
+                    );
+                }
             }
         } else {
-            await ctx.api.editMessageText(
-                res.chat.id,
-                res.message_id,
-                settings.prompt.fail
-            );
+            if (!silent)
+                await ctx.api.editMessageText(
+                    res!.chat.id,
+                    res!.message_id,
+                    settings.prompt.fail
+                );
             await ctx.api.forwardMessage(
                 settings.adminGroupId,
                 ctx.msg.chat.id,

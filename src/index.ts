@@ -817,7 +817,35 @@ async function main() {
                         contextMap
                     );
                 } else if (msg.reply_to_message) {
-                    processReply(ctx as any, nomland, bot, idMap, contextMap);
+                    const url = getShareUrlFromMsg(msg);
+
+                    if (url) {
+                        const author = await getPosterAccount(
+                            msg.from,
+                            bot,
+                            ctx as any,
+                            nomland
+                        );
+
+                        processShareMsg(
+                            ctx as any,
+                            author,
+                            idMap,
+                            contextMap,
+                            nomland,
+                            url,
+                            bot,
+                            "channel",
+                            true
+                        );
+                    } else
+                        processReply(
+                            ctx as any,
+                            nomland,
+                            bot,
+                            idMap,
+                            contextMap
+                        );
                 }
             }
         });
