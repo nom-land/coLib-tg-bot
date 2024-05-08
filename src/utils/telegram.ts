@@ -205,7 +205,6 @@ export function getReplyToMsgId(msg: Message, idMap: Map<string, string>) {
     if (!reply_to_message) return;
 
     const replyToMsgId = getMessageKey(reply_to_message);
-
     if (!replyToMsgId) return;
 
     const replyToPostId = idMap.get(replyToMsgId);

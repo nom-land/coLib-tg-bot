@@ -818,10 +818,7 @@ async function main() {
                     );
                 } else if (msg.reply_to_message) {
                     // if the original msg is a share
-                    const replyToPostId = getReplyToMsgId(
-                        msg.reply_to_message,
-                        idMap
-                    );
+                    const replyToPostId = getReplyToMsgId(msg, idMap);
                     if (!replyToPostId) return;
 
                     const url = getShareUrlFromMsg(msg);
