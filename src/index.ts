@@ -817,29 +817,42 @@ async function main() {
                         contextMap
                     );
                 } else if (msg.reply_to_message) {
-                    // const url = getShareUrlFromMsg(msg);
+                    // if the original msg is a share
+                    const replyToPostId = getReplyToMsgId(
+                        msg.reply_to_message,
+                        idMap
+                    );
+                    if (!replyToPostId) return;
 
-                    // if (url) {
-                    //     const author = await getPosterAccount(
-                    //         msg.from,
-                    //         bot,
-                    //         ctx as any,
-                    //         nomland
-                    //     );
+                    const url = getShareUrlFromMsg(msg);
 
-                    //     processShareMsg(
-                    //         ctx as any,
-                    //         author,
-                    //         idMap,
-                    //         contextMap,
-                    //         nomland,
-                    //         url,
-                    //         bot,
-                    //         "channel",
-                    //         true
-                    //     );
-                    // } else
-                    processReply(ctx as any, nomland, bot, idMap, contextMap);
+                    if (url) {
+                        const author = await getPosterAccount(
+                            msg.from,
+                            bot,
+                            ctx as any,
+                            nomland
+                        );
+
+                        processShareMsg(
+                            ctx as any,
+                            author,
+                            idMap,
+                            contextMap,
+                            nomland,
+                            url,
+                            bot,
+                            "channel",
+                            true
+                        );
+                    } else
+                        processReply(
+                            ctx as any,
+                            nomland,
+                            bot,
+                            idMap,
+                            contextMap
+                        );
                 }
             }
         });
