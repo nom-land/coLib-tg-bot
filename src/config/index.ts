@@ -11,6 +11,9 @@ export const settings = {
     idMapTblName: "nunti-idMap",
     contextMapTblName: "group-context-map",
     defaultCurationList: "general", //will be used in the new created linklist in the community
+    media: {
+        telegram: "https://t.me/nomland",
+    },
     prompt: {
         load: "⛏️ Processing...",
         // (Sorry I'm a little slow for now - but all my content is stored decentrally using blockchain so it's worth it)",

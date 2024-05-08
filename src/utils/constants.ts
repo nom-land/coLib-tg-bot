@@ -1,3 +1,5 @@
+import { settings } from "../config";
+
 export function helpMsg(botUsername: string, mode: "dm" | "group" | "admin") {
     //TODO: /admin command shows the admin commands
     const adminCommands = `
@@ -11,34 +13,33 @@ export function helpMsg(botUsername: string, mode: "dm" | "group" | "admin") {
 
     if (mode === "dm")
         return `
-  Hi! I'm nunti. I have to be used in a group. If you are admin of a group, you can add me to the group and give me the admin permission. I can help your community have better sharing experience and help your community easily build your brand.
-    
-  1. To manage your community shares, you can use the following commands(admin permission required):
-${adminCommands}
+  Hi! I'm nunti. 
+  
+  I'm designed to be used in a Telegram (TG) group or TG channel.
 
-  2. If you want to share something, just in the group paste the URL then @ me(no permission required). e.g.
-  
-  This book is amazing!!! https://example.com/u/xyz @${botUsername} #Romantic #AmazingBook
-  
-  3. You can also reply to a message containing URL to make a share(no permission required). e.g.
-  
-  Message A: This book is amazing!!! https://example.com/u/xyz 
-  Message B(replying to A): @${botUsername} #Romantic #AmazingBook
-  
-  4. Replying to any existed share message will also be recorded with the share together. (Welcome! Discussion is encouraged!)
+  If you're an admin of a group, you can add me to the TG group and grant me admin permissions. I can help improve your community's sharing experience and make it easier to build your brand.
+
+  I can also be utilized in a TG channel that is connected with a group. You'll need to add me as an admin in both the channel and the group.
+
+  Anyone can share something in the group by pasting the URL and then mentioning me. For example:
+
+  "This book is amazing!!! https://example.com/u/xyz @${botUsername} #Romantic #AmazingBook"
+
+  If you are a Telegram Channel Admin, you do not need to include "@${botUsername}" when sharing in the Telegram Channel.
+
+  Responding to any existing share message will be recorded along with the share. (Welcome! Discussion is encouraged!)
+
+  Feel free to give us some feedback at ${settings.media.telegram}
   `;
     else
         return `Hi! I'm nunti.
       
-    1. If you want to share something, just in the group paste the URL then @ me. e.g.
+    Anyone can share something in the group. Just paste the URL and then mention me. For example:
     
-    This book is amazing!!! https://example.com/u/xyz @${botUsername} #Romantic #AmazingBook
+    "This book is amazing!!! https://example.com/u/xyz @${botUsername} #Romantic #AmazingBook"
     
-    2. You can also reply to a message containing URL to share. e.g.
-    
-    Message A: This book is amazing!!! https://example.com/u/xyz 
-    Message B(replying to A): @${botUsername} #Romantic #AmazingBook
+    If you are a Telegram Channel Admin, you do not need to include "@${botUsername}" when sharing in the Telegram Channel.
 
-🕘 Coming Soon: Managing the curation will be possible.
+    Feel free to give us some feedback at ${settings.media.telegram}
     `;
 }
