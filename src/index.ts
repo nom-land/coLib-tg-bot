@@ -817,35 +817,29 @@ async function main() {
                         contextMap
                     );
                 } else if (msg.reply_to_message) {
-                    const url = getShareUrlFromMsg(msg);
+                    // const url = getShareUrlFromMsg(msg);
 
-                    if (url) {
-                        const author = await getPosterAccount(
-                            msg.from,
-                            bot,
-                            ctx as any,
-                            nomland
-                        );
+                    // if (url) {
+                    //     const author = await getPosterAccount(
+                    //         msg.from,
+                    //         bot,
+                    //         ctx as any,
+                    //         nomland
+                    //     );
 
-                        processShareMsg(
-                            ctx as any,
-                            author,
-                            idMap,
-                            contextMap,
-                            nomland,
-                            url,
-                            bot,
-                            "channel",
-                            true
-                        );
-                    } else
-                        processReply(
-                            ctx as any,
-                            nomland,
-                            bot,
-                            idMap,
-                            contextMap
-                        );
+                    //     processShareMsg(
+                    //         ctx as any,
+                    //         author,
+                    //         idMap,
+                    //         contextMap,
+                    //         nomland,
+                    //         url,
+                    //         bot,
+                    //         "channel",
+                    //         true
+                    //     );
+                    // } else
+                    processReply(ctx as any, nomland, bot, idMap, contextMap);
                 }
             }
         });
