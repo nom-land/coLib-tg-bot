@@ -347,6 +347,13 @@ async function main() {
                                             parse_mode: "HTML",
                                         }
                                     );
+
+                                    reply(
+                                        "Succeed. CharacterId: " +
+                                            shareNoteKey.characterId +
+                                            ", NoteId: " +
+                                            shareNoteKey.noteId
+                                    );
                                 } else {
                                     reply("Fail to process.");
                                 }
