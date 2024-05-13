@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0
   nomland.js:
-    specifier: 0.5.9
-    version: 0.5.9(typescript@5.2.2)
+    specifier: 0.5.10
+    version: 0.5.10(typescript@5.2.2)
   tsup:
     specifier: ^7.2.0
     version: 7.2.0(ts-node@10.9.1)(typescript@5.2.2)
@@ -1182,6 +1182,10 @@ packages:
     engines: {node: '>=0.12'}
     dev: false
 
+  /entity-types@0.1.2:
+    resolution: {integrity: sha512-qoWTl0v96v5b+d1kxqdoSZ1QToDOFIc2MwmgzzMm3t/CgpljUHnQzFvReMR2H7nF5xA/RYIaSmrzUuOEQVbnpg==}
+    dev: false
+
   /esbuild@0.18.20:
     resolution: {integrity: sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA==}
     engines: {node: '>=12'}
@@ -1787,8 +1791,8 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /nomland.js@0.5.9(typescript@5.2.2):
-    resolution: {integrity: sha512-w1oW4a/Smg/XZ5QKF4RXr8AZQVAqiPtcwlBl0NXqknYuS/XbaVpT+i0zBJu/ObpGtsK58WP8wAnUyhvExEu7gA==}
+  /nomland.js@0.5.10(typescript@5.2.2):
+    resolution: {integrity: sha512-m1yBJ57RiymCccY5us1rVsr9ewtRDT6ELc4WaogTAQS9TScLHyoq1jQLHbCJqZ54Fub0j4M0BR2xIEH0wm2wMQ==}
     dependencies:
       '@extractus/article-extractor': 7.3.1
       '@nomland/elephant': 0.2.9
@@ -1799,6 +1803,7 @@ packages:
       discord.js: 14.14.1
       dotenv: 16.3.1
       eip1193-types: 0.2.1
+      entity-types: 0.1.2
       md5: 2.3.0
       punycode: 2.3.1
       viem: 2.9.2(typescript@5.2.2)
