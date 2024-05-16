@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0
   nomland.js:
-    specifier: 0.5.10
-    version: 0.5.10(typescript@5.2.2)
+    specifier: 0.5.13
+    version: 0.5.13(typescript@5.2.2)(zod@3.23.8)
   tsup:
     specifier: ^7.2.0
     version: 7.2.0(ts-node@10.9.1)(typescript@5.2.2)
@@ -711,7 +711,7 @@ packages:
       typescript: 5.2.2
     dev: false
 
-  /abitype@1.0.0(typescript@5.2.2):
+  /abitype@1.0.0(typescript@5.2.2)(zod@3.23.8):
     resolution: {integrity: sha512-NMeMah//6bJ56H5XRj8QCV4AwuW6hB6zqz2LnhhLdcWVQOsXki6/Pn3APeqxCma62nXIcmZWdu1DlHWS74umVQ==}
     peerDependencies:
       typescript: '>=5.0.4'
@@ -723,6 +723,7 @@ packages:
         optional: true
     dependencies:
       typescript: 5.2.2
+      zod: 3.23.8
     dev: false
 
   /abort-controller@3.0.0:
@@ -960,7 +961,7 @@ packages:
       which: 2.0.2
     dev: false
 
-  /crossbell@1.11.7(typescript@5.2.2):
+  /crossbell@1.11.7(typescript@5.2.2)(zod@3.23.8):
     resolution: {integrity: sha512-GgznXkpF8mwisKDRR7Gb7gkDY1SqobGkkhUcFcz6fcaRyZ6d1Z5CFXeDkfkNSJs/MppV05PcdTyHAXtewKMDsA==}
     engines: {node: '>=16.14.0'}
     dependencies:
@@ -970,7 +971,7 @@ packages:
       eip1193-types: 0.2.1
       exponential-backoff: 3.1.1
       p-limit: 3.1.0
-      viem: 2.9.2(typescript@5.2.2)
+      viem: 2.9.2(typescript@5.2.2)(zod@3.23.8)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -988,7 +989,7 @@ packages:
       eip1193-types: 0.2.1
       exponential-backoff: 3.1.1
       p-limit: 3.1.0
-      viem: 2.9.2(typescript@5.2.2)
+      viem: 2.9.2(typescript@5.2.2)(zod@3.23.8)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -1182,8 +1183,20 @@ packages:
     engines: {node: '>=0.12'}
     dev: false
 
-  /entity-types@0.1.2:
-    resolution: {integrity: sha512-qoWTl0v96v5b+d1kxqdoSZ1QToDOFIc2MwmgzzMm3t/CgpljUHnQzFvReMR2H7nF5xA/RYIaSmrzUuOEQVbnpg==}
+  /entity-types@0.1.4(typescript@5.2.2):
+    resolution: {integrity: sha512-R/PZyu9Q4qQK/4heJVAsMgqUzRxbw9DHhzhsGLLxEQNcct32AXCLLqMElE4Mbaa5DBy3QgDstLPGSjEjE02fvg==}
+    dependencies:
+      nomland.js: 0.5.13(typescript@5.2.2)(zod@3.23.8)
+      zod: 3.23.8
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - debug
+      - encoding
+      - graphql
+      - supports-color
+      - typescript
+      - utf-8-validate
     dev: false
 
   /esbuild@0.18.20:
@@ -1791,22 +1804,22 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /nomland.js@0.5.10(typescript@5.2.2):
-    resolution: {integrity: sha512-m1yBJ57RiymCccY5us1rVsr9ewtRDT6ELc4WaogTAQS9TScLHyoq1jQLHbCJqZ54Fub0j4M0BR2xIEH0wm2wMQ==}
+  /nomland.js@0.5.13(typescript@5.2.2)(zod@3.23.8):
+    resolution: {integrity: sha512-YH0AGq4rqvpOnh6OQ/xfhJLxsPDUk4fy47xuUcH6Dqt4ElfBAP++EqeScaVfKjkQEZ2j2EVQxjw6F9SeTHwjgA==}
     dependencies:
       '@extractus/article-extractor': 7.3.1
       '@nomland/elephant': 0.2.9
       '@urql/core': 4.3.0
       browser-bunyan: 1.8.0
       bunyan: 1.8.15
-      crossbell: 1.11.7(typescript@5.2.2)
+      crossbell: 1.11.7(typescript@5.2.2)(zod@3.23.8)
       discord.js: 14.14.1
       dotenv: 16.3.1
       eip1193-types: 0.2.1
-      entity-types: 0.1.2
+      entity-types: 0.1.4(typescript@5.2.2)
       md5: 2.3.0
       punycode: 2.3.1
-      viem: 2.9.2(typescript@5.2.2)
+      viem: 2.9.2(typescript@5.2.2)(zod@3.23.8)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -2374,7 +2387,7 @@ packages:
       - zod
     dev: false
 
-  /viem@2.9.2(typescript@5.2.2):
+  /viem@2.9.2(typescript@5.2.2)(zod@3.23.8):
     resolution: {integrity: sha512-GRakUTNiYE9W+vL+Be9JkQfzWnkczerHtSpEe2JR/jEGTYZAs4shrA4WLgiaVCI9JxpnduZhQfRWNvy2dlyP2g==}
     peerDependencies:
       typescript: '>=5.0.4'
@@ -2387,7 +2400,7 @@ packages:
       '@noble/hashes': 1.3.2
       '@scure/bip32': 1.3.2
       '@scure/bip39': 1.2.1
-      abitype: 1.0.0(typescript@5.2.2)
+      abitype: 1.0.0(typescript@5.2.2)(zod@3.23.8)
       isows: 1.0.3(ws@8.13.0)
       typescript: 5.2.2
       ws: 8.13.0
@@ -2553,4 +2566,8 @@ packages:
   /yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+    dev: false
+
+  /zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
     dev: false
