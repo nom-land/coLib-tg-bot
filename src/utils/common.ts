@@ -177,7 +177,6 @@ export function getChannelChatIdByChannelId(
     let channelChatId;
 
     for (const chatId of contextMap) {
-        console.log(chatId);
         if (chatId[0] !== channelId && chatId[1] === contextId) {
             channelChatId = chatId[0];
             break;
@@ -188,7 +187,7 @@ export function getChannelChatIdByChannelId(
 }
 
 // get forward message details without attachment
-export function getFwdMsgShareDetails(msg: Message, botName: string) {
+export function getChannelFwdMsgShareDetails(msg: Message, botName: string) {
     if (!msg.forward_from_chat) return null;
     if (!msg.forward_date) return null;
 
@@ -229,6 +228,28 @@ export function getFwdMsgShareDetails(msg: Message, botName: string) {
     if (msgLink) {
         raw.external_url = msgLink;
     }
+
+    return raw;
+}
+
+export function getUserFwdMsgShareDetails(msg: Message, botName: string) {
+    if (!msg.forward_from) return null;
+    if (!msg.forward_date) return null;
+
+    const text = getMsgText(msg);
+    if (!text) return null;
+
+    // const contentAfterBot = text.split(botName)[1]; // TODO? remove it?
+    const { tags, contentWithoutTags } = removeTags(msg);
+    const content = cleanContent(contentWithoutTags, botName);
+
+    const raw = {
+        content,
+        rawContent: msg.text,
+        tags,
+        sources: ["Telegram"],
+        date_published: convertDate(msg.forward_date),
+    } as NoteDetails;
 
     return raw;
 }
@@ -336,31 +357,7 @@ export async function getChannelPosterAccount(
     const { data } = await nomland.contract.character.getByHandle({
         handle,
     });
-    if (
-        !data.characterId ||
-        !data.metadata?.avatars ||
-        data.metadata?.avatars?.length === 0
-    ) {
-        const ipfsFile = await getUserAvatar(ctx, bot.token, author.id);
-
-        if (ipfsFile?.url && data.characterId) {
-            if (
-                !data.metadata?.avatars ||
-                data.metadata?.avatars?.length === 0
-            ) {
-                const oldProfile = data.metadata;
-
-                await nomland.contract.character.setMetadata({
-                    characterId: data.characterId,
-                    metadata: {
-                        avatars: [ipfsFile.url],
-                        ...oldProfile,
-                    },
-                });
-            }
-            poster.avatar = ipfsFile.url;
-        }
-    }
+    // forward message doesn't have avatar. skip avatar fetching
     return poster;
 }
 
@@ -368,7 +365,8 @@ export async function getPosterAccount(
     user: User,
     bot: Bot,
     ctx: CommandContext<Context>,
-    nomland: Nomland
+    nomland: Nomland,
+    fetchAvatar = true
 ) {
     const poster = makeAccount(user);
 
@@ -378,9 +376,10 @@ export async function getPosterAccount(
         handle,
     });
     if (
-        !data.characterId ||
-        !data.metadata?.avatars ||
-        data.metadata?.avatars?.length === 0
+        fetchAvatar &&
+        (!data.characterId ||
+            !data.metadata?.avatars ||
+            data.metadata?.avatars?.length === 0)
     ) {
         const ipfsFile = await getUserAvatar(ctx, bot.token);
 
@@ -504,6 +503,35 @@ export async function getContext(
     }
 }
 
+export async function getContextFromChatId(
+    groupId: string, // with out -100
+    ctx: CommandContext<Context>,
+    nomland: NomlandNode,
+    ctxMap?: Map<string, string>
+): Promise<Accountish | null> {
+    // Firstly to get the context id from group mappings
+    if (ctxMap && ctxMap.has(groupId)) {
+        return Number(ctxMap.get(groupId)) || null;
+    }
+
+    const ctxHandle = getContextHandle("-100" + groupId);
+
+    const contextId = await getCharacter(ctxHandle, nomland);
+
+    if (Number(contextId) === 0) {
+        const chatInfo = await ctx.api.getChat("-100" + groupId);
+        const context = makeAccount({
+            id: +groupId,
+            type: "group",
+            title: (chatInfo as any).title || "",
+            description: (chatInfo as any).description || "",
+        });
+        return context;
+    } else {
+        return contextId;
+    }
+}
+
 export function getNoteKey(noteKeyString: string) {
     const [characterId, noteId] = noteKeyString.split("-");
     return {
@@ -515,7 +543,15 @@ export function getNoteKey(noteKeyString: string) {
 export function decomposeMsgLink(link: string) {
     const parts = link.split("/");
     const msgId = parts.pop();
-    const chatId = parts.pop();
+    let chatId;
+    const chatOrTopicId = parts.pop();
+    const nextPart = parts.pop();
+    if (nextPart !== "c") {
+        chatId = nextPart;
+    } else {
+        chatId = chatOrTopicId;
+    }
+
     return [chatId, msgId];
 }
 
@@ -608,9 +644,18 @@ function filterUrl(url: string | null | undefined) {
     return url;
 }
 
-function getContextHandle(msg: Message) {
-    const handle = hashOf(msg.chat.id.toString(), 12);
-    return handle;
+function getContextHandle(msgOrId: Message | string) {
+    if (typeof msgOrId === "string")
+        return formatHandle({
+            handle: hashOf(msgOrId, 12),
+            platform: "Telegram",
+        });
+
+    const handle = hashOf(msgOrId.chat.id.toString(), 12);
+    return formatHandle({
+        handle,
+        platform: "Telegram",
+    });
 }
 
 // TODO: import from nomland

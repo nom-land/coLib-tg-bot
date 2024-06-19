@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { log } from "./utils/log";
-import Nomland, { Accountish } from "nomland.js";
+import Nomland, { Accountish, makeAccount } from "nomland.js";
 
 import {
     getReplyToMsgId,
@@ -8,7 +8,8 @@ import {
     helpInfoInGroup,
     isAdmin,
     mentions,
-    prepareFwdMessage,
+    prepareChannelFwdMessage,
+    prepareUserFwdMessage,
 } from "./utils/telegram";
 import { Bot, CommandContext, Context } from "grammy";
 import { helpMsg } from "./utils/constants";
@@ -30,6 +31,7 @@ import {
     getShareUrlFromMsg,
     getUrlFromMessage,
     getShareDetails,
+    getContextFromChatId,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import {
@@ -42,7 +44,8 @@ import {
     ManualReplyCmdStatus,
     ManualShareCmdStatus,
     ReplyParams,
-    ShareParams,
+    ChannelShareParams,
+    UserShareParams,
 } from "./types/command";
 import NomlandNode from "nomland.js";
 
@@ -97,7 +100,7 @@ async function main() {
             }
         });
 
-        let shareParams: ShareParams | undefined;
+        let shareParams: ChannelShareParams | UserShareParams | undefined;
         let replyParams: ReplyParams | undefined;
 
         let manualShareCmdStatus: ManualShareCmdStatus = "START";
@@ -105,6 +108,7 @@ async function main() {
 
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
+
             if (getMsgOrigin(msg) === "admin") {
                 if (settings.adminCreateShareTopicId) {
                     if (
@@ -133,24 +137,21 @@ async function main() {
                                 reply("Restarted.");
                             }
                             if (manualShareCmdStatus === "START") {
-                                if (msg.forward_from_chat) {
-                                    if (
-                                        msg.forward_from_chat.type != "channel"
-                                    ) {
-                                        reply(
-                                            "Currently only support channel broadcast message."
+                                if (
+                                    msg.forward_from_chat &&
+                                    msg.forward_from_chat.type == "channel"
+                                ) {
+                                    const result =
+                                        await prepareChannelFwdMessage(
+                                            ctx,
+                                            contextMap,
+                                            bot,
+                                            nomland,
+                                            reply
                                         );
-                                        return;
-                                    }
-                                    const result = await prepareFwdMessage(
-                                        ctx,
-                                        contextMap,
-                                        bot,
-                                        nomland,
-                                        reply
-                                    );
                                     if (!result) return;
                                     shareParams = {
+                                        fwdFrom: "channel",
                                         chatMsgId: null,
                                         ...result,
                                     };
@@ -158,13 +159,42 @@ async function main() {
                                         "Please continue to input the chat message link of this channel broadcast.\n填写群链接！！不能带channel地址的那个！！！"
                                     );
                                     manualShareCmdStatus = "WAIT_MSG_ID";
+                                } else if (msg.forward_from) {
+                                    const result = await prepareUserFwdMessage(
+                                        ctx,
+                                        bot,
+                                        nomland,
+                                        reply
+                                    );
+                                    if (!result) return;
+                                    shareParams = {
+                                        fwdFrom: "group",
+                                        chatMsgId: null,
+                                        ...result,
+                                    };
+                                    reply(
+                                        "Please continue to input the chat message link.\n填写消息的原始群链接！！"
+                                    );
+                                    manualShareCmdStatus = "WAIT_USER_MSG_ID";
+                                } else {
+                                    reply(
+                                        "Currently only support channel broadcast message."
+                                    );
+                                    return;
                                 }
-                            } else if (manualShareCmdStatus === "WAIT_MSG_ID") {
+                            } else if (
+                                manualShareCmdStatus === "WAIT_MSG_ID" ||
+                                manualShareCmdStatus === "WAIT_USER_MSG_ID"
+                            ) {
                                 const msgLink = getFirstUrl(msg.text || "");
                                 if (!msgLink) {
-                                    reply(
-                                        "Please continue to input the chat message link of this channel broadcast.\n填写群链接！！不能带channel地址的那个！！！"
-                                    );
+                                    manualReplyCmdStatus === "WAIT_MSG_ID"
+                                        ? reply(
+                                              "Please continue to input the chat message link of this channel broadcast.\n填写群链接！！不能带channel地址的那个！！！"
+                                          )
+                                        : reply(
+                                              "Please continue to input the chat message link.\n填写消息的原始群链接！！"
+                                          );
                                     return;
                                 }
 
@@ -181,18 +211,45 @@ async function main() {
                                     return;
                                 }
 
-                                if (shareParams?.channelChatId !== chatId) {
-                                    reply(
-                                        "Message link mismatches: Expected: " +
-                                            shareParams?.channelChatId +
-                                            ", but got: " +
-                                            chatId +
-                                            ". Please input the correct message link of this channel broadcast."
+                                if (manualReplyCmdStatus === "WAIT_MSG_ID") {
+                                    if (shareParams?.channelChatId !== chatId) {
+                                        reply(
+                                            "Message link mismatches: Expected: " +
+                                                shareParams?.channelChatId +
+                                                ", but got: " +
+                                                chatId +
+                                                ". Please input the correct message link of this channel broadcast."
+                                        );
+                                        return;
+                                    }
+                                } else {
+                                    shareParams!.channelChatId = chatId;
+                                    const chatInfo = await bot.api.getChat(
+                                        "-100" + chatId
                                     );
-                                    return;
+
+                                    const context = await getContextFromChatId(
+                                        chatId,
+                                        ctx as any,
+                                        nomland,
+                                        contextMap
+                                    );
+                                    if (!context) {
+                                        reply(
+                                            "Fail to get context. 获取context失败。"
+                                        );
+                                        shareParams = undefined;
+                                        manualShareCmdStatus = "START";
+                                        return;
+                                    }
+                                    shareParams!.context = context;
+                                    shareParams!.details.external_url = msgLink;
                                 }
+
                                 const chatMsgKey =
-                                    shareParams.channelChatId + "-" + chatMsgId;
+                                    shareParams?.channelChatId +
+                                    "-" +
+                                    chatMsgId;
                                 const noteKey = idMap.get(chatMsgKey);
 
                                 if (noteKey) {
@@ -207,7 +264,7 @@ async function main() {
 
                                     return;
                                 }
-                                shareParams.chatMsgId = chatMsgId;
+                                shareParams!.chatMsgId = chatMsgId;
 
                                 manualShareCmdStatus = "WAIT_RPL_OPTION";
                                 reply(
@@ -816,13 +873,13 @@ async function main() {
             } else {
                 if (mentions(msg, botUsername)) {
                     // TODO: only the first file will be processed, caused by Telegram design
-                    processShareInGroup(
-                        ctx as any,
-                        nomland,
-                        bot,
-                        idMap,
-                        contextMap
-                    );
+                    // processShareInGroup(
+                    //     ctx as any,
+                    //     nomland,
+                    //     bot,
+                    //     idMap,
+                    //     contextMap
+                    // );
                 } else if (msg.reply_to_message) {
                     // if the original msg is a share
                     const replyToPostId = getReplyToMsgId(msg, idMap);

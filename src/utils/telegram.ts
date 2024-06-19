@@ -9,7 +9,7 @@ import {
     getContext,
     getContextFromChat,
     getEntities,
-    getFwdMsgShareDetails,
+    getChannelFwdMsgShareDetails,
     getMessageIdFromFwd,
     getMessageKey,
     getMsgOrigin,
@@ -20,9 +20,11 @@ import {
     getShareDetails,
     getShareUrlFromMsg,
     storeMsg,
+    getUserFwdMsgShareDetails,
+    getPosterAccount,
 } from "./common";
 import { createShare } from "./nomland";
-import NomlandNode, { Accountish } from "nomland.js";
+import NomlandNode, { Accountish, makeAccount } from "nomland.js";
 import { assert } from "console";
 export interface RawMessage {
     content: string;
@@ -213,7 +215,7 @@ export function getReplyToMsgId(msg: Message, idMap: Map<string, string>) {
     return replyToPostId;
 }
 
-export async function prepareFwdMessage(
+export async function prepareChannelFwdMessage(
     ctx: Context,
     contextMap: Map<string, string>,
     bot: Bot,
@@ -272,7 +274,7 @@ export async function prepareFwdMessage(
     }
 
     const msgAttachments = await getNoteAttachments(ctx as any, msg, bot.token);
-    const details = getFwdMsgShareDetails(msg, bot.botInfo.username);
+    const details = getChannelFwdMsgShareDetails(msg, bot.botInfo.username);
     if (!details) {
         reply("Fail to get the share details.");
         return;
@@ -287,5 +289,51 @@ export async function prepareFwdMessage(
         channelId,
         broadcastId,
         channelChatId,
+    };
+}
+
+export async function prepareUserFwdMessage(
+    ctx: Context,
+    bot: Bot,
+    nomland: NomlandNode,
+    reply: (text: string) => void
+) {
+    const msg = ctx.msg!;
+    assert(msg.forward_from);
+
+    const url = getShareUrlFromMsg(msg);
+
+    if (!url) {
+        reply("Message has no url.");
+        return;
+    }
+    const authorAccount = await getPosterAccount(
+        msg.forward_from!,
+        bot,
+        ctx as any,
+        nomland,
+        false
+    );
+
+    if (!authorAccount) {
+        reply("Fail to get the author.");
+        return;
+    }
+
+    const msgAttachments = await getNoteAttachments(ctx as any, msg, bot.token);
+    const details = getUserFwdMsgShareDetails(msg, bot.botInfo.username);
+    if (!details) {
+        reply("Fail to get the share details.");
+        return;
+    }
+    details.attachments = msgAttachments;
+
+    return {
+        url,
+        details,
+        authorAccount,
+        context: "",
+        channelId: "",
+        channelChatId: "",
     };
 }

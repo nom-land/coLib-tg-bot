@@ -16,7 +16,8 @@ export type ManualReplyCmdStatus =
     | "WAIT_MSG_ID"
     | "WAIT_RPL_MSG_ID";
 
-export interface ShareParams {
+export interface ChannelShareParams {
+    fwdFrom: "channel";
     url: string;
     details: NoteDetails;
     authorAccount: Accountish;
@@ -26,9 +27,19 @@ export interface ShareParams {
     channelChatId: string;
     chatMsgId: string | null;
 }
+export interface UserShareParams {
+    fwdFrom: "group";
+    url: string;
+    details: NoteDetails;
+    authorAccount: Accountish;
+    context: Accountish;
+    channelChatId: string;
+    chatMsgId: string | null;
+}
 export type ManualShareCmdStatus =
     | "START"
     | "WAIT_MSG_ID"
+    | "WAIT_USER_MSG_ID"
     | "WAIT_RPL_OPTION"
     // | "RPL_OPTION_RECEIVED"
     | "WAIT_EDIT_LINK";
