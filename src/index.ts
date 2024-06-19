@@ -863,6 +863,7 @@ async function main() {
                         }
                     }
                 }
+                return;
             }
 
             if (getMsgOrigin(msg) === "private") {
