@@ -835,6 +835,28 @@ async function main() {
 
                                 reply(name || "Name not found.");
                             }
+                            if (msgText.startsWith("/deleteShare")) {
+                                const shareId = msgText.split(" ")[1];
+
+                                const characterId = shareId.split("-")[0];
+                                const noteId = shareId.split("-")[1];
+
+                                const share = await nomland.contract.note.get({
+                                    characterId,
+                                    noteId,
+                                });
+                                if (!share) {
+                                    reply("Share not found.");
+                                    return;
+                                }
+
+                                await nomland.contract.note.delete({
+                                    characterId,
+                                    noteId,
+                                });
+
+                                reply("Succeed.");
+                            }
                         } catch (e) {
                             reply("Something went wrong.");
                             console.log(e);
