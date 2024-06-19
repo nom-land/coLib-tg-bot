@@ -873,13 +873,13 @@ async function main() {
             } else {
                 if (mentions(msg, botUsername)) {
                     // TODO: only the first file will be processed, caused by Telegram design
-                    // processShareInGroup(
-                    //     ctx as any,
-                    //     nomland,
-                    //     bot,
-                    //     idMap,
-                    //     contextMap
-                    // );
+                    processShareInGroup(
+                        ctx as any,
+                        nomland,
+                        bot,
+                        idMap,
+                        contextMap
+                    );
                 } else if (msg.reply_to_message) {
                     // if the original msg is a share
                     const replyToPostId = getReplyToMsgId(msg, idMap);
