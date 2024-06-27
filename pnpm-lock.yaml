@@ -12,8 +12,8 @@ importers:
         specifier: ^1.8.15
         version: 1.8.15
       crossbell:
-        specifier: ^1.9.0
-        version: 1.9.0(typescript@5.2.2)(zod@3.23.8)
+        specifier: ^1.12.0
+        version: 1.12.0(typescript@5.2.2)(zod@3.23.8)
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
@@ -116,9 +116,6 @@ packages:
 
   '@browser-bunyan/levels@1.8.0':
     resolution: {integrity: sha512-f9oSDik8kAl+4rhVyHqIr012P1boHFUKc7D9nzA5+lDsFoP90UQnDwpseqBdF2mTaWYju10E7h+GdH8u+7MHOQ==}
-
-  '@crossbell/ipfs-fetch@0.0.19':
-    resolution: {integrity: sha512-0Yf9+MMTSD+JJkFbNaK/s+kl3CXhr4oq2yj3K0dvheB+e8uykcpM7yomxHie/sr0ushw3G7Ppf5NXYkfH0eiSw==}
 
   '@crossbell/ipfs-fetch@0.0.21':
     resolution: {integrity: sha512-wPNLptEPy64/7WMz7bhS5QVYfjproCr3ACgeQoJzmNKvH2FNDlF6FjMB9XNwV0spAczGb/SueNzW8p6BBLXHnw==}
@@ -441,6 +438,17 @@ packages:
       zod:
         optional: true
 
+  abitype@1.0.4:
+    resolution: {integrity: sha512-UivtYZOGJGE8rsrM/N5vdRkUpqEZVmuTumfTuolm7m/6O09wprd958rx8kUBwVAAAhQDveGAgD0GJdBuR8s6tw==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+      zod: ^3 >=3.22.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      zod:
+        optional: true
+
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
@@ -494,6 +502,9 @@ packages:
 
   async-cache-dedupe@2.1.0:
     resolution: {integrity: sha512-hBoXEwpJOUIjce7HrwbGN9RlYZM6+XblU+ClZ0AzrV4y5UGDqMR/EUAg2S2p0GF0b0IYOreFEt5RD0eiUwa2Qg==}
+
+  async-cache-dedupe@2.2.0:
+    resolution: {integrity: sha512-jl4L6dGC+KLB/LIA1iIBiq7eWQ43K7lIcIdwbUUwRmfT209yH8Xm1uPTOxxlNQ7XD6/XHU7xhSr/NgPxlH04MQ==}
 
   async-retry@1.3.3:
     resolution: {integrity: sha512-wfr/jstw9xNi/0teMHrRW7dsz3Lt5ARhYNZ2ewpadnhaIp5mbALhOAP+EAdsC7t4Z6wqsDVv9+W6gm1Dk9mEyw==}
@@ -585,8 +596,8 @@ packages:
     resolution: {integrity: sha512-GgznXkpF8mwisKDRR7Gb7gkDY1SqobGkkhUcFcz6fcaRyZ6d1Z5CFXeDkfkNSJs/MppV05PcdTyHAXtewKMDsA==}
     engines: {node: '>=16.14.0'}
 
-  crossbell@1.9.0:
-    resolution: {integrity: sha512-3iSEiLq/QUL3c9atMxuRGwwopp337hVtDsW5Nwdgx7Pc97Hb/tZQvWpy34GOr8NZPqchqjx7eAM2uWEjyDEotA==}
+  crossbell@1.12.0:
+    resolution: {integrity: sha512-OIuMlYuZ0yzUNLKnSFJWGAu2F0UHzM+OR3l1dQWJMxuK+tflLh7beQ/0tjnEyKD96wXOAdx/k5t2EGH5JKCG8A==}
     engines: {node: '>=16.14.0'}
 
   crypt@0.0.2:
@@ -869,6 +880,11 @@ packages:
 
   isows@1.0.3:
     resolution: {integrity: sha512-2cKei4vlmg2cxEjm3wVSqn8pcoRF/LX/wpifuuNquFO4SQmPwarClT+SUCA2lt+l581tTeZIPIZuIDo2jWN1fg==}
+    peerDependencies:
+      ws: '*'
+
+  isows@1.0.4:
+    resolution: {integrity: sha512-hEzjY+x9u9hPmBom9IIAqdJCwNLax+xrPb51vEPpERoFlIxgmZcHzsT5jKG06nvInKOBGvReAVz80Umed5CczQ==}
     peerDependencies:
       ws: '*'
 
@@ -1352,6 +1368,14 @@ packages:
       typescript:
         optional: true
 
+  viem@2.16.3:
+    resolution: {integrity: sha512-6ExbIpi77C1HzGSjx6W+fn39Cz1ULlVV74XHxi1kYpOAqY7/iAoynK5X2aQp2LvxstTqS1GIKEdpCAZ8dKi2Ag==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   viem@2.9.2:
     resolution: {integrity: sha512-GRakUTNiYE9W+vL+Be9JkQfzWnkczerHtSpEe2JR/jEGTYZAs4shrA4WLgiaVCI9JxpnduZhQfRWNvy2dlyP2g==}
     peerDependencies:
@@ -1437,6 +1461,18 @@ packages:
 
   ws@8.16.0:
     resolution: {integrity: sha512-HS0c//TP7Ina87TfiPUz1rQzMhHrl/SG2guqRcTOIUYD2q8uhUdNHZYJUaQ8aTGPzCh+c6oawMKW35nFl1dxyQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.17.1:
+    resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -1564,8 +1600,6 @@ snapshots:
       '@browser-bunyan/levels': 1.8.0
 
   '@browser-bunyan/levels@1.8.0': {}
-
-  '@crossbell/ipfs-fetch@0.0.19': {}
 
   '@crossbell/ipfs-fetch@0.0.21': {}
 
@@ -1855,6 +1889,11 @@ snapshots:
       typescript: 5.2.2
       zod: 3.23.8
 
+  abitype@1.0.4(typescript@5.2.2)(zod@3.23.8):
+    optionalDependencies:
+      typescript: 5.2.2
+      zod: 3.23.8
+
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
@@ -1897,6 +1936,11 @@ snapshots:
   array-union@2.1.0: {}
 
   async-cache-dedupe@2.1.0:
+    dependencies:
+      mnemonist: 0.39.8
+      safe-stable-stringify: 2.4.3
+
+  async-cache-dedupe@2.2.0:
     dependencies:
       mnemonist: 0.39.8
       safe-stable-stringify: 2.4.3
@@ -2014,15 +2058,15 @@ snapshots:
       - utf-8-validate
       - zod
 
-  crossbell@1.9.0(typescript@5.2.2)(zod@3.23.8):
+  crossbell@1.12.0(typescript@5.2.2)(zod@3.23.8):
     dependencies:
-      '@crossbell/ipfs-fetch': 0.0.19
-      async-cache-dedupe: 2.1.0
+      '@crossbell/ipfs-fetch': 0.0.21
+      async-cache-dedupe: 2.2.0
       async-retry: 1.3.3
       eip1193-types: 0.2.1
       exponential-backoff: 3.1.1
       p-limit: 3.1.0
-      viem: 2.9.2(typescript@5.2.2)(zod@3.23.8)
+      viem: 2.16.3(typescript@5.2.2)(zod@3.23.8)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -2359,6 +2403,10 @@ snapshots:
   isows@1.0.3(ws@8.13.0):
     dependencies:
       ws: 8.13.0
+
+  isows@1.0.4(ws@8.17.1):
+    dependencies:
+      ws: 8.17.1
 
   jackspeak@2.3.6:
     dependencies:
@@ -2884,6 +2932,23 @@ snapshots:
       - utf-8-validate
       - zod
 
+  viem@2.16.3(typescript@5.2.2)(zod@3.23.8):
+    dependencies:
+      '@adraffy/ens-normalize': 1.10.0
+      '@noble/curves': 1.2.0
+      '@noble/hashes': 1.3.2
+      '@scure/bip32': 1.3.2
+      '@scure/bip39': 1.2.1
+      abitype: 1.0.4(typescript@5.2.2)(zod@3.23.8)
+      isows: 1.0.4(ws@8.17.1)
+      ws: 8.17.1
+    optionalDependencies:
+      typescript: 5.2.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
   viem@2.9.2(typescript@5.2.2)(zod@3.23.8):
     dependencies:
       '@adraffy/ens-normalize': 1.10.0
@@ -2959,6 +3024,8 @@ snapshots:
   ws@8.14.2: {}
 
   ws@8.16.0: {}
+
+  ws@8.17.1: {}
 
   xml-name-validator@4.0.0: {}
 

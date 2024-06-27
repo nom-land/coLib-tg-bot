@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "bunyan": "^1.8.15",
-    "crossbell": "^1.9.0",
+    "crossbell": "^1.12.0",
     "dotenv": "^16.3.1",
     "grammy": "^1.19.2",
     "md5": "^2.3.0",
