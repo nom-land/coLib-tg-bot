@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { log } from "./utils/log";
-import Nomland, { Accountish, makeAccount } from "nomland.js";
+import Nomland, { Accountish } from "nomland.js";
 
 import {
     getReplyToMsgId,
