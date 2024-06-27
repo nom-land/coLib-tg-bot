@@ -321,7 +321,7 @@ async function main() {
                                                 shareNoteKey.noteId
                                         );
                                     } else {
-                                        reply("Fail to process.");
+                                        reply("Fail to create share.");
                                     }
 
                                     manualShareCmdStatus = "START";
@@ -412,11 +412,12 @@ async function main() {
                                             shareNoteKey.noteId
                                     );
                                 } else {
-                                    reply("Fail to process.");
+                                    reply("Fail to create share.");
                                 }
                             }
                         } catch (e) {
                             console.log("Something went wrong.");
+                            reply("Something went wrong: " + e);
                             console.log(e);
                         }
                     }
@@ -780,7 +781,7 @@ async function main() {
                                         replyNoteKey.noteId
                                 );
                             } else {
-                                reply("Fail to process.");
+                                reply("Fail to create reply.");
                             }
 
                             manualReplyCmdStatus = "START";
@@ -840,11 +841,11 @@ async function main() {
 
                                 const characterId = shareId.split("-")[0];
                                 const noteId = shareId.split("-")[1];
-
                                 const share = await nomland.contract.note.get({
                                     characterId,
                                     noteId,
                                 });
+
                                 if (!share) {
                                     reply("Share not found.");
                                     return;
@@ -858,7 +859,7 @@ async function main() {
                                 reply("Succeed.");
                             }
                         } catch (e) {
-                            reply("Something went wrong.");
+                            reply("Something went wrong: " + e);
                             console.log(e);
                         }
                     }

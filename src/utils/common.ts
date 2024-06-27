@@ -546,7 +546,7 @@ export function decomposeMsgLink(link: string) {
     let chatId;
     const chatOrTopicId = parts.pop();
     const nextPart = parts.pop();
-    if (nextPart !== "c") {
+    if (nextPart !== "c" && nextPart !== "t.me") {
         chatId = nextPart;
     } else {
         chatId = chatOrTopicId;
