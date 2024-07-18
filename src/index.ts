@@ -30,7 +30,6 @@ import {
     convertDate,
     getShareUrlFromMsg,
     getUrlFromMessage,
-    getShareDetails,
     getContextFromChatId,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
@@ -857,6 +856,25 @@ async function main() {
                                 });
 
                                 reply("Succeed.");
+                            }
+                            if (msgText.startsWith("/deleteBotMsg")) {
+                                const messageLink = msgText.split(" ")[1];
+                                // https://t.me/justgoidea/2090?comment=2812
+                                const [chatNumId, msgId] =
+                                    await getKeyFromGroupMessageLink(
+                                        messageLink,
+                                        bot,
+                                        reply
+                                    );
+                                if (chatNumId && msgId) {
+                                    await bot.api.deleteMessage(
+                                        "-100" + chatNumId,
+                                        +msgId
+                                    );
+                                    reply("Succeed.");
+                                } else {
+                                    reply("Invalid message link.");
+                                }
                             }
                         } catch (e) {
                             reply("Something went wrong: " + e);
