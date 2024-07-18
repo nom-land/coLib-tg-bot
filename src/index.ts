@@ -37,6 +37,7 @@ import {
     setKeyValue,
     loadKeyValuePairs,
     removeKeyValue,
+    removeKeyValueByValue,
 } from "./utils/keyValueStore";
 import { createShare } from "./utils/nomland";
 import {
@@ -839,7 +840,9 @@ async function main() {
                                 const shareId = msgText.split(" ")[1];
 
                                 const characterId = shareId.split("-")[0];
+
                                 const noteId = shareId.split("-")[1];
+
                                 const share = await nomland.contract.note.get({
                                     characterId,
                                     noteId,
@@ -854,6 +857,11 @@ async function main() {
                                     characterId,
                                     noteId,
                                 });
+
+                                removeKeyValueByValue(
+                                    shareId,
+                                    settings.idMapTblName
+                                );
 
                                 reply("Succeed.");
                             }

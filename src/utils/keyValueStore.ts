@@ -72,6 +72,37 @@ export function removeKeyValue(key: string, table?: string): boolean {
     }
 }
 
+export function removeKeyValueByValue(value: string, table?: string): boolean {
+    const filePath = getFilePath(table);
+
+    try {
+        if (!fs.existsSync(filePath)) {
+            console.error("No file path found.");
+            return false;
+        }
+
+        const data = fs.readFileSync(filePath, "utf-8");
+        let store: Record<string, string> = {};
+
+        if (data) {
+            store = JSON.parse(data);
+        }
+
+        for (const [key, val] of Object.entries(store)) {
+            if (val === value) {
+                console.log(key);
+                delete store[key];
+                fs.writeFileSync(filePath, JSON.stringify(store, null, 2));
+            }
+        }
+
+        return true;
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+}
+
 export function loadKeyValuePairs(
     targetMap: Map<string, string>,
     table?: string
