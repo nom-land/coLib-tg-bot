@@ -159,23 +159,49 @@ async function main() {
                                         "Please continue to input the chat message link of this channel broadcast.\n填写群链接！！不能带channel地址的那个！！！"
                                     );
                                     manualShareCmdStatus = "WAIT_MSG_ID";
-                                } else if (msg.forward_from) {
+                                } else if (
+                                    msg.forward_from ||
+                                    (msg as any).forward_origin.type ===
+                                        "hidden_user"
+                                ) {
+                                    const isHiddenUser =
+                                        (msg as any).forward_origin ===
+                                        "hidden_user";
+
                                     const result = await prepareUserFwdMessage(
                                         ctx,
                                         bot,
                                         nomland,
-                                        reply
+                                        reply,
+                                        isHiddenUser
                                     );
+
                                     if (!result) return;
+
                                     shareParams = {
                                         fwdFrom: "group",
                                         chatMsgId: null,
                                         ...result,
                                     };
-                                    reply(
-                                        "Please continue to input the chat message link.\n填写消息的原始群链接！！"
-                                    );
+
+                                    if (isHiddenUser) {
+                                        reply(
+                                            "This is a hidden user message. Please input the author character id then input the chat message link.\n这是一个隐藏用户消息。请先填写作者的character id，再填写消息的原始群链接！"
+                                        );
+                                    } else {
+                                        reply(
+                                            "Please continue to input the chat message link.\n填写消息的原始群链接！！"
+                                        );
+                                    }
+
                                     manualShareCmdStatus = "WAIT_USER_MSG_ID";
+                                } else if (
+                                    (msg as any).forward_origin.type ==
+                                    "hidden_user"
+                                ) {
+                                    reply(
+                                        "This is a hidden user message. Please input the author character id.\n这是一个隐藏用户消息。请填写作者的character id。"
+                                    );
                                 } else {
                                     reply(
                                         "Currently only support channel broadcast message."
@@ -186,6 +212,20 @@ async function main() {
                                 manualShareCmdStatus === "WAIT_MSG_ID" ||
                                 manualShareCmdStatus === "WAIT_USER_MSG_ID"
                             ) {
+                                if (
+                                    manualShareCmdStatus ===
+                                        "WAIT_USER_MSG_ID" &&
+                                    !!shareParams?.authorAccount
+                                ) {
+                                    const authorId = msg.text?.split(" ")[0];
+                                    if (!authorId) {
+                                        reply(
+                                            "Please input the correct author id."
+                                        );
+                                        return;
+                                    }
+                                    shareParams.authorAccount = authorId;
+                                }
                                 const msgLink = getFirstUrl(msg.text || "");
                                 if (!msgLink) {
                                     manualReplyCmdStatus === "WAIT_MSG_ID"

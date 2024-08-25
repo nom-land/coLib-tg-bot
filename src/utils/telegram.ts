@@ -296,10 +296,11 @@ export async function prepareUserFwdMessage(
     ctx: Context,
     bot: Bot,
     nomland: NomlandNode,
-    reply: (text: string) => void
+    reply: (text: string) => void,
+    ignoreUser?: boolean
 ) {
     const msg = ctx.msg!;
-    assert(msg.forward_from);
+    if (!ignoreUser) assert(msg.forward_from);
 
     const url = getShareUrlFromMsg(msg);
 
@@ -307,17 +308,22 @@ export async function prepareUserFwdMessage(
         reply("Message has no url.");
         return;
     }
-    const authorAccount = await getPosterAccount(
-        msg.forward_from!,
-        bot,
-        ctx as any,
-        nomland,
-        false
-    );
 
-    if (!authorAccount) {
-        reply("Fail to get the author.");
-        return;
+    let authorAccount: Accountish;
+
+    if (!ignoreUser) {
+        authorAccount = await getPosterAccount(
+            msg.forward_from!,
+            bot,
+            ctx as any,
+            nomland,
+            false
+        );
+
+        if (!authorAccount) {
+            reply("Fail to get the author.");
+            return;
+        }
     }
 
     const msgAttachments = await getNoteAttachments(ctx as any, msg, bot.token);
