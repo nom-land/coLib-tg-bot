@@ -24,8 +24,8 @@ importers:
         specifier: ^2.3.0
         version: 2.3.0
       nomland.js:
-        specifier: 0.6.10
-        version: 0.6.10(typescript@5.2.2)(zod@3.23.8)
+        specifier: 0.6.11
+        version: 0.6.11(typescript@5.2.2)(zod@3.23.8)
       tsup:
         specifier: ^7.2.0
         version: 7.2.0(postcss@8.4.38)(ts-node@10.9.1(@types/node@20.9.0)(typescript@5.2.2))(typescript@5.2.2)
@@ -427,17 +427,6 @@ packages:
       zod:
         optional: true
 
-  abitype@1.0.0:
-    resolution: {integrity: sha512-NMeMah//6bJ56H5XRj8QCV4AwuW6hB6zqz2LnhhLdcWVQOsXki6/Pn3APeqxCma62nXIcmZWdu1DlHWS74umVQ==}
-    peerDependencies:
-      typescript: '>=5.0.4'
-      zod: ^3 >=3.22.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-      zod:
-        optional: true
-
   abitype@1.0.4:
     resolution: {integrity: sha512-UivtYZOGJGE8rsrM/N5vdRkUpqEZVmuTumfTuolm7m/6O09wprd958rx8kUBwVAAAhQDveGAgD0GJdBuR8s6tw==}
     peerDependencies:
@@ -499,9 +488,6 @@ packages:
   array-union@2.1.0:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
-
-  async-cache-dedupe@2.1.0:
-    resolution: {integrity: sha512-hBoXEwpJOUIjce7HrwbGN9RlYZM6+XblU+ClZ0AzrV4y5UGDqMR/EUAg2S2p0GF0b0IYOreFEt5RD0eiUwa2Qg==}
 
   async-cache-dedupe@2.2.0:
     resolution: {integrity: sha512-jl4L6dGC+KLB/LIA1iIBiq7eWQ43K7lIcIdwbUUwRmfT209yH8Xm1uPTOxxlNQ7XD6/XHU7xhSr/NgPxlH04MQ==}
@@ -1034,8 +1020,8 @@ packages:
   nomland.js@0.5.13:
     resolution: {integrity: sha512-YH0AGq4rqvpOnh6OQ/xfhJLxsPDUk4fy47xuUcH6Dqt4ElfBAP++EqeScaVfKjkQEZ2j2EVQxjw6F9SeTHwjgA==}
 
-  nomland.js@0.6.10:
-    resolution: {integrity: sha512-00h/NxoCuu5jVgIPKBApfP5A5yLjnAMcHQGol5XNdGv95LcMm6eABEortKw9z60053JOMBdEJhZWWb8uKoQUjQ==}
+  nomland.js@0.6.11:
+    resolution: {integrity: sha512-Tm+EP0jujBjJ0FulRK1zp7MiBZ3iXXab5oEfVghTizaFpd4KgQXalM7T+pFknuiOmkPt7rZVSO4s4Giq1J7lFQ==}
 
   nopt@1.0.10:
     resolution: {integrity: sha512-NWmpvLSqUrgrAC9HCuxEvb+PSloHpqVu+FqcO4eeF2h5qYRhA7ev6KvelyQAKtegUbC6RypJnlEOhd8vloNKYg==}
@@ -1376,14 +1362,6 @@ packages:
       typescript:
         optional: true
 
-  viem@2.9.2:
-    resolution: {integrity: sha512-GRakUTNiYE9W+vL+Be9JkQfzWnkczerHtSpEe2JR/jEGTYZAs4shrA4WLgiaVCI9JxpnduZhQfRWNvy2dlyP2g==}
-    peerDependencies:
-      typescript: '>=5.0.4'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   w3c-xmlserializer@4.0.0:
     resolution: {integrity: sha512-d+BFHzbiCx6zGfz0HyQ6Rg69w9k19nviJspaj4yNscGjrHu94sVP+aRm75yEbCh+r2/yR+7q6hux9LVtbuTGBw==}
     engines: {node: '>=14'}
@@ -1449,18 +1427,6 @@ packages:
 
   ws@8.14.2:
     resolution: {integrity: sha512-wEBG1ftX4jcglPxgFCMJmZ2PLtSbJ2Peg6TmpJFTbe9GZYOQCDPdMYu/Tm0/bGZkw8paZnJY45J4K2PZrLYq8g==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
-  ws@8.16.0:
-    resolution: {integrity: sha512-HS0c//TP7Ina87TfiPUz1rQzMhHrl/SG2guqRcTOIUYD2q8uhUdNHZYJUaQ8aTGPzCh+c6oawMKW35nFl1dxyQ==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -1649,7 +1615,7 @@ snapshots:
       '@vladfrangu/async_event_emitter': 2.2.4
       discord-api-types: 0.37.61
       tslib: 2.6.2
-      ws: 8.16.0
+      ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -1884,11 +1850,6 @@ snapshots:
       typescript: 5.2.2
       zod: 3.23.8
 
-  abitype@1.0.0(typescript@5.2.2)(zod@3.23.8):
-    optionalDependencies:
-      typescript: 5.2.2
-      zod: 3.23.8
-
   abitype@1.0.4(typescript@5.2.2)(zod@3.23.8):
     optionalDependencies:
       typescript: 5.2.2
@@ -1934,11 +1895,6 @@ snapshots:
   arg@4.1.3: {}
 
   array-union@2.1.0: {}
-
-  async-cache-dedupe@2.1.0:
-    dependencies:
-      mnemonist: 0.39.8
-      safe-stable-stringify: 2.4.3
 
   async-cache-dedupe@2.2.0:
     dependencies:
@@ -2046,12 +2002,12 @@ snapshots:
   crossbell@1.11.7(typescript@5.2.2)(zod@3.23.8):
     dependencies:
       '@crossbell/ipfs-fetch': 0.0.21
-      async-cache-dedupe: 2.1.0
+      async-cache-dedupe: 2.2.0
       async-retry: 1.3.3
       eip1193-types: 0.2.1
       exponential-backoff: 3.1.1
       p-limit: 3.1.0
-      viem: 2.9.2(typescript@5.2.2)(zod@3.23.8)
+      viem: 2.16.3(typescript@5.2.2)(zod@3.23.8)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -2439,7 +2395,7 @@ snapshots:
       whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
       whatwg-url: 12.0.1
-      ws: 8.16.0
+      ws: 8.17.1
       xml-name-validator: 4.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -2580,7 +2536,7 @@ snapshots:
       entity-types: 0.1.4(typescript@5.2.2)
       md5: 2.3.0
       punycode: 2.3.1
-      viem: 2.9.2(typescript@5.2.2)(zod@3.23.8)
+      viem: 2.16.3(typescript@5.2.2)(zod@3.23.8)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -2592,7 +2548,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  nomland.js@0.6.10(typescript@5.2.2)(zod@3.23.8):
+  nomland.js@0.6.11(typescript@5.2.2)(zod@3.23.8):
     dependencies:
       '@extractus/article-extractor': 7.3.1
       '@nomland/elephant': 0.2.10
@@ -2606,7 +2562,7 @@ snapshots:
       entity-types: 0.1.4(typescript@5.2.2)
       md5: 2.3.0
       punycode: 2.3.1
-      viem: 2.9.2(typescript@5.2.2)(zod@3.23.8)
+      viem: 2.16.3(typescript@5.2.2)(zod@3.23.8)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -2949,23 +2905,6 @@ snapshots:
       - utf-8-validate
       - zod
 
-  viem@2.9.2(typescript@5.2.2)(zod@3.23.8):
-    dependencies:
-      '@adraffy/ens-normalize': 1.10.0
-      '@noble/curves': 1.2.0
-      '@noble/hashes': 1.3.2
-      '@scure/bip32': 1.3.2
-      '@scure/bip39': 1.2.1
-      abitype: 1.0.0(typescript@5.2.2)(zod@3.23.8)
-      isows: 1.0.3(ws@8.13.0)
-      ws: 8.13.0
-    optionalDependencies:
-      typescript: 5.2.2
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-      - zod
-
   w3c-xmlserializer@4.0.0:
     dependencies:
       xml-name-validator: 4.0.0
@@ -3022,8 +2961,6 @@ snapshots:
   ws@8.13.0: {}
 
   ws@8.14.2: {}
-
-  ws@8.16.0: {}
 
   ws@8.17.1: {}
 
