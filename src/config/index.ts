@@ -10,6 +10,7 @@ export const settings = {
     appName: "nunti", //will be used in the "sources" of metadata
     idMapTblName: "nunti-idMap",
     contextMapTblName: "group-context-map",
+    watchTopicListTblName: "watch-topic-list",
     defaultCurationList: "general", //will be used in the new created linklist in the community
     media: {
         telegram: "https://t.me/nomland",

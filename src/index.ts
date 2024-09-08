@@ -68,6 +68,9 @@ async function main() {
         const contextMap = new Map<string, string>();
         loadKeyValuePairs(contextMap, settings.contextMapTblName);
 
+        const watchTopicList = new Map<string, string>();
+        loadKeyValuePairs(watchTopicList, settings.watchTopicListTblName);
+
         bot.command("help", async (ctx) => {
             const inDM = getMsgOrigin(ctx.msg) === "private";
             if (inDM) {
@@ -108,13 +111,12 @@ async function main() {
 
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
+            const topicId = msg.reply_to_message?.message_id;
+            const chatId = msg.chat.id.toString();
 
             if (getMsgOrigin(msg) === "admin") {
                 if (settings.adminCreateShareTopicId) {
-                    if (
-                        msg.reply_to_message?.message_id ===
-                        settings.adminCreateShareTopicId
-                    ) {
+                    if (topicId === settings.adminCreateShareTopicId) {
                         const restart = () => {
                             manualShareCmdStatus = "START";
                             shareParams = undefined;
@@ -434,10 +436,7 @@ async function main() {
                         }
                     };
 
-                    if (
-                        msg.reply_to_message?.message_id ===
-                        settings.adminBindContextTopicId
-                    ) {
+                    if (topicId === settings.adminBindContextTopicId) {
                         const msgText = getMsgText(msg);
                         if (!msgText) return;
 
@@ -524,10 +523,7 @@ async function main() {
                     }
                 }
                 if (settings.adminCreateReplyTopicId) {
-                    if (
-                        msg.reply_to_message?.message_id ===
-                        settings.adminCreateReplyTopicId
-                    ) {
+                    if (topicId === settings.adminCreateReplyTopicId) {
                         const reply = (text: string) => {
                             if (settings.adminCreateReplyTopicId) {
                                 ctx.reply(text, {
@@ -790,10 +786,7 @@ async function main() {
                     }
                 }
                 if (settings.adminEditTopicId) {
-                    if (
-                        msg.reply_to_message?.message_id ===
-                        settings.adminEditTopicId
-                    ) {
+                    if (topicId === settings.adminEditTopicId) {
                         const reply = (text: string) => {
                             ctx.reply(text, {
                                 reply_to_message_id: settings.adminEditTopicId,
@@ -920,6 +913,30 @@ async function main() {
                     idMap,
                     contextMap
                 );
+            } else if (watchTopicList.get(`${chatId}-${topicId}`)) {
+                const url = getShareUrlFromMsg(msg);
+
+                const author = await getPosterAccount(
+                    msg.from,
+                    bot,
+                    ctx as any,
+                    nomland
+                );
+                if (author && url) {
+                    processShareMsg(
+                        ctx as any,
+                        author,
+                        idMap,
+                        contextMap,
+                        nomland,
+                        url,
+                        bot,
+                        "group"
+                    );
+                }
+                if (msg.reply_to_message) {
+                    processReply(ctx as any, nomland, bot, idMap, contextMap);
+                }
             } else {
                 if (mentions(msg, botUsername)) {
                     // TODO: only the first file will be processed, caused by Telegram design
