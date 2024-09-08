@@ -31,6 +31,7 @@ import {
     getShareUrlFromMsg,
     getUrlFromMessage,
     getContextFromChatId,
+    storeWatchChatTopic,
 } from "./utils/common";
 import { feedbackUrl, settings } from "./config";
 import {
@@ -48,6 +49,7 @@ import {
     UserShareParams,
 } from "./types/command";
 import NomlandNode from "nomland.js";
+import { url } from "inspector";
 
 async function main() {
     try {
@@ -111,8 +113,8 @@ async function main() {
 
         bot.on("message", async (ctx) => {
             const msg = ctx.msg;
-            const topicId = msg.reply_to_message?.message_id;
-            const chatId = msg.chat.id.toString();
+            const topicId = msg.reply_to_message?.message_thread_id;
+            const chatId = msg.chat.id.toString().slice(4);
 
             if (getMsgOrigin(msg) === "admin") {
                 if (settings.adminCreateShareTopicId) {
@@ -200,7 +202,7 @@ async function main() {
                                     return;
                                 }
 
-                                const [chatId, chatMsgId] =
+                                const { chatId, chatMsgId } =
                                     await getKeyFromGroupMessageLink(
                                         msgLink,
                                         bot,
@@ -226,9 +228,6 @@ async function main() {
                                     }
                                 } else {
                                     shareParams!.channelChatId = chatId;
-                                    const chatInfo = await bot.api.getChat(
-                                        "-100" + chatId
-                                    );
 
                                     const context = await getContextFromChatId(
                                         chatId,
@@ -355,7 +354,7 @@ async function main() {
                                     return;
                                 }
 
-                                const [chatId, chatMsgId] =
+                                const { chatId, chatMsgId } =
                                     await getKeyFromGroupMessageLink(
                                         msgLink,
                                         bot,
@@ -642,7 +641,7 @@ async function main() {
                                 return;
                             }
 
-                            const [chatId, chatMsgId] =
+                            const { chatId, chatMsgId } =
                                 await getKeyFromGroupMessageLink(
                                     msgLink,
                                     bot,
@@ -688,7 +687,7 @@ async function main() {
                                 return;
                             }
 
-                            const [chatId, chatMsgId] =
+                            const { chatId, chatMsgId } =
                                 await getKeyFromGroupMessageLink(
                                     msgLink,
                                     bot,
@@ -861,21 +860,85 @@ async function main() {
                             if (msgText.startsWith("/deleteBotMsg")) {
                                 const messageLink = msgText.split(" ")[1];
                                 // https://t.me/justgoidea/2090?comment=2812
-                                const [chatNumId, msgId] =
+                                const { chatId, chatMsgId } =
                                     await getKeyFromGroupMessageLink(
                                         messageLink,
                                         bot,
                                         reply
                                     );
-                                if (chatNumId && msgId) {
+                                if (chatId && chatMsgId) {
                                     await bot.api.deleteMessage(
-                                        "-100" + chatNumId,
-                                        +msgId
+                                        "-100" + chatId,
+                                        +chatMsgId
                                     );
                                     reply("Succeed.");
                                 } else {
                                     reply("Invalid message link.");
                                 }
+                            }
+                        } catch (e) {
+                            reply("Something went wrong: " + e);
+                            console.log(e);
+                        }
+                    }
+                }
+                if (settings.adminWatchChatTopicId) {
+                    if (topicId === settings.adminWatchChatTopicId) {
+                        const reply = (text: string) => {
+                            ctx.reply(text, {
+                                reply_to_message_id:
+                                    settings.adminWatchChatTopicId,
+                            });
+                        };
+                        const msgText = getMsgText(msg);
+                        if (!msgText) return;
+
+                        try {
+                            if (msgText.startsWith("/watch")) {
+                                const msgUrl = getFirstUrl(msgText);
+                                if (!msgUrl) {
+                                    reply(
+                                        "Please input the correct message link."
+                                    );
+                                    return;
+                                }
+                                const { chatId, topicId, chatMsgId } =
+                                    await getKeyFromGroupMessageLink(
+                                        msgUrl,
+                                        bot,
+                                        reply
+                                    );
+                                if (!chatId || !topicId || !chatMsgId) {
+                                    reply(
+                                        "Please input the correct message link."
+                                    );
+                                    return;
+                                }
+                                // TODO
+                                reply(`Set ${chatId}-${topicId} to watch.`);
+
+                                storeWatchChatTopic(
+                                    chatId + "-" + topicId,
+                                    msgUrl,
+                                    watchTopicList
+                                );
+                            }
+                            if (msgText.startsWith("/ls")) {
+                                let text = "";
+                                for (const [k, v] of watchTopicList) {
+                                    text += k + "\n" + v + "\n";
+                                }
+                                reply(text || "No watch topic.");
+                            }
+                            if (msgText.startsWith("/remove")) {
+                                const chatId = msgText.split(" ")[1];
+                                const topicId = msgText.split(" ")[2];
+                                watchTopicList.delete(`${chatId}-${topicId}`);
+                                removeKeyValue(
+                                    `${chatId}-${topicId}`,
+                                    settings.watchTopicListTblName
+                                );
+                                reply("Succeed.");
                             }
                         } catch (e) {
                             reply("Something went wrong: " + e);
@@ -914,6 +977,8 @@ async function main() {
                     contextMap
                 );
             } else if (watchTopicList.get(`${chatId}-${topicId}`)) {
+                console.log("hit it");
+
                 const url = getShareUrlFromMsg(msg);
 
                 const author = await getPosterAccount(
@@ -934,6 +999,7 @@ async function main() {
                         "group"
                     );
                 }
+                console.log(msg.reply_to_message);
                 if (msg.reply_to_message) {
                     processReply(ctx as any, nomland, bot, idMap, contextMap);
                 }
