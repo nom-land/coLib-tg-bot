@@ -1,5 +1,5 @@
 .env
 node_modules
 dist
-store/nunti*
+store/*
 src/manual.ts
