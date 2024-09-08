@@ -543,15 +543,17 @@ export function decomposeMsgLink(link: string) {
     const parts = link.split("/");
     const msgId = parts.pop();
     let chatId;
+    let topicId;
     const chatOrTopicId = parts.pop();
     const nextPart = parts.pop();
     if (nextPart !== "c" && nextPart !== "t.me") {
+        topicId = chatOrTopicId;
         chatId = nextPart;
     } else {
         chatId = chatOrTopicId;
     }
 
-    return [chatId, msgId];
+    return { chatId, topicId, msgId };
 }
 
 export async function getKeyFromGroupMessageLink(
@@ -559,8 +561,9 @@ export async function getKeyFromGroupMessageLink(
     bot: Bot,
     reply: (text: string) => void
 ) {
-    const [chatId, msgId] = decomposeMsgLink(link);
-    if (!chatId || !msgId) return [null, null];
+    const { chatId, topicId, msgId } = decomposeMsgLink(link);
+    if (!chatId || !msgId)
+        return { chatId: null, topicId: null, chatMsgId: null };
 
     let chatNumId = chatId;
     // if chatId is not a number, it's a username
@@ -570,11 +573,11 @@ export async function getKeyFromGroupMessageLink(
             reply(
                 "It's not a group chat message. Please input the correct chat message link."
             );
-            return [null, null];
+            return { chatId: null, topicId: null, chatMsgId: null };
         }
         chatNumId = chatInfo.id.toString().slice(4);
     }
-    return [chatNumId, msgId];
+    return { chatId: chatNumId, topicId, chatMsgId: msgId };
 }
 
 export function storeContextMapValue(
@@ -597,6 +600,16 @@ export function storeMsg(
 
     if (setKeyValue(msgKey, postId, settings.idMapTblName)) {
         idMap.set(msgKey, postId);
+    }
+}
+
+export function storeWatchChatTopic(
+    key: string,
+    value: string,
+    watchChatTopicMap: Map<string, string>
+) {
+    if (setKeyValue(key, value, settings.watchTopicListTblName)) {
+        watchChatTopicMap.set(key, value);
     }
 }
 

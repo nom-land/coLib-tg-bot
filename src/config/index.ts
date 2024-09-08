@@ -7,9 +7,11 @@ export const settings = {
     adminCreateReplyTopicId: Number(process.env.ADMIN_CREATE_REPLY_TOPIC),
     adminErrorLogTopicId: Number(process.env.ADMIN_ERROR_LOG_TOPIC),
     adminEditTopicId: Number(process.env.ADMIN_EDIT_TOPIC),
+    adminWatchChatTopicId: Number(process.env.ADMIN_WATCH_CHAT_TOPIC),
     appName: "nunti", //will be used in the "sources" of metadata
     idMapTblName: "nunti-idMap",
     contextMapTblName: "group-context-map",
+    watchTopicListTblName: "watch-topic-list",
     defaultCurationList: "general", //will be used in the new created linklist in the community
     media: {
         telegram: "https://t.me/nomland",
