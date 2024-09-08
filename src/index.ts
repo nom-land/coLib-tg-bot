@@ -135,7 +135,12 @@ async function main() {
                             if (msg.text === "restart") {
                                 restart();
                                 reply("Restarted.");
+                                return;
                             }
+                            const fwdOrigin = (msg as any).forward_origin;
+                            const isHiddenUser =
+                                fwdOrigin?.type === "hidden_user";
+
                             if (manualShareCmdStatus === "START") {
                                 if (
                                     msg.forward_from_chat &&
@@ -159,15 +164,7 @@ async function main() {
                                         "Please continue to input the chat message link of this channel broadcast.\n填写群链接！！不能带channel地址的那个！！！"
                                     );
                                     manualShareCmdStatus = "WAIT_MSG_ID";
-                                } else if (
-                                    msg.forward_from ||
-                                    (msg as any).forward_origin.type ===
-                                        "hidden_user"
-                                ) {
-                                    const isHiddenUser =
-                                        (msg as any).forward_origin ===
-                                        "hidden_user";
-
+                                } else if (msg.forward_from || isHiddenUser) {
                                     const result = await prepareUserFwdMessage(
                                         ctx,
                                         bot,
@@ -195,13 +192,6 @@ async function main() {
                                     }
 
                                     manualShareCmdStatus = "WAIT_USER_MSG_ID";
-                                } else if (
-                                    (msg as any).forward_origin.type ==
-                                    "hidden_user"
-                                ) {
-                                    reply(
-                                        "This is a hidden user message. Please input the author character id.\n这是一个隐藏用户消息。请填写作者的character id。"
-                                    );
                                 } else {
                                     reply(
                                         "Currently only support channel broadcast message."
@@ -215,7 +205,7 @@ async function main() {
                                 if (
                                     manualShareCmdStatus ===
                                         "WAIT_USER_MSG_ID" &&
-                                    !!shareParams?.authorAccount
+                                    shareParams?.authorAccount === ""
                                 ) {
                                     const authorId = msg.text?.split(" ")[0];
                                     if (!authorId) {
@@ -619,7 +609,7 @@ async function main() {
                                     };
                                     manualReplyCmdStatus = "WAIT_AUTHOR_ID";
                                     reply(
-                                        "This is a hidden user. Please continue to input the author id."
+                                        "This is a hidden user. Please continue to input the author character id."
                                     );
                                 } else if (
                                     fwdOrigin &&

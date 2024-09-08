@@ -276,7 +276,7 @@ export async function prepareChannelFwdMessage(
     const msgAttachments = await getNoteAttachments(ctx as any, msg, bot.token);
     const details = getChannelFwdMsgShareDetails(msg, bot.botInfo.username);
     if (!details) {
-        reply("Fail to get the share details.");
+        reply("Fail to get share details.");
         return;
     }
     details.attachments = msgAttachments;
@@ -324,12 +324,14 @@ export async function prepareUserFwdMessage(
             reply("Fail to get the author.");
             return;
         }
+    } else {
+        authorAccount = "";
     }
 
     const msgAttachments = await getNoteAttachments(ctx as any, msg, bot.token);
     const details = getUserFwdMsgShareDetails(msg, bot.botInfo.username);
     if (!details) {
-        reply("Fail to get the share details.");
+        reply("Fail to get share details.");
         return;
     }
     details.attachments = msgAttachments;

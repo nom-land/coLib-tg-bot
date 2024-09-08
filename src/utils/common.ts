@@ -233,7 +233,6 @@ export function getChannelFwdMsgShareDetails(msg: Message, botName: string) {
 }
 
 export function getUserFwdMsgShareDetails(msg: Message, botName: string) {
-    if (!msg.forward_from) return null;
     if (!msg.forward_date) return null;
 
     const text = getMsgText(msg);
