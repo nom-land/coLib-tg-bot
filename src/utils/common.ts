@@ -649,6 +649,7 @@ function filterUrl(url: string | null | undefined) {
         "google.com/map",
         "google.com/travel",
         "store.google.com",
+        "colib.app",
     ];
     if (ignoreList.some((i) => url.includes(i))) {
         return null;
