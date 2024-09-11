@@ -550,6 +550,7 @@ export function decomposeMsgLink(link: string) {
         topicId = chatOrTopicId;
         chatId = nextPart;
     } else {
+        topicId = msgId;
         chatId = chatOrTopicId;
     }
 

@@ -49,7 +49,6 @@ import {
     UserShareParams,
 } from "./types/command";
 import NomlandNode from "nomland.js";
-import { url } from "inspector";
 
 async function main() {
     try {
